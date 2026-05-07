@@ -1,35 +1,14 @@
 import { Link } from "react-router-dom"
 import { PageHeader } from "../components/layout/PageHeader"
-
-const careProfiles = [
-  {
-    name: "Madam Lim",
-    summary: "78 years old",
-    details: ["Dementia", "Diabetes", "Mandarin"],
-    status: "Ready for search",
-  },
-  {
-    name: "Mr Tan",
-    summary: "82 years old",
-    details: ["Stroke recovery", "Transfer support", "English"],
-    status: "Draft profile",
-  },
-]
-
-const savedCaregivers = [
-  {
-    name: "Maria Santos",
-    note: "Saved for Madam Lim",
-    traits: ["Dementia care", "Mandarin", "8 years"],
-  },
-  {
-    name: "Grace Villanueva",
-    note: "Saved for Mr Tan",
-    traits: ["Stroke support", "Transfers", "9 years"],
-  },
-]
+import {
+  getCareProfileCardData,
+  getSavedCaregiverGalleryData,
+} from "../lib/data"
 
 export function UserProfilePage() {
+  const careProfiles = getCareProfileCardData()
+  const savedCaregivers = getSavedCaregiverGalleryData()
+
   return (
     <section className="page-section">
       <div className="profile-hero">
@@ -61,7 +40,7 @@ export function UserProfilePage() {
 
         <div className="profile-card-grid" aria-label="Care profiles">
           {careProfiles.map((profile) => (
-            <article className="profile-card" key={profile.name}>
+            <article className="profile-card" key={profile.id}>
               <div className="profile-card-top">
                 <span className="profile-glyph" aria-hidden="true">
                   {profile.name.charAt(0)}
@@ -82,7 +61,7 @@ export function UserProfilePage() {
               </div>
 
               <div className="profile-card-actions">
-                <Link className="inline-action" to="/search">
+                <Link className="inline-action" to={`/search?profile=${profile.id}`}>
                   Search caregivers
                 </Link>
               </div>
@@ -102,7 +81,7 @@ export function UserProfilePage() {
 
           <div className="saved-gallery" aria-label="Saved caregivers preview">
             {savedCaregivers.map((caregiver) => (
-              <article className="saved-card" key={caregiver.name}>
+              <article className="saved-card" key={caregiver.id}>
                 <div className="portrait-block portrait-block-compact">
                   <div className="portrait-frame portrait-frame-small">
                     <span>{caregiver.name.charAt(0)}</span>

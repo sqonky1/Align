@@ -1,65 +1,81 @@
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { PageHeader } from "../components/layout/PageHeader"
-
-const previewCaregivers = [
-  {
-    name: "Maria Santos",
-    agency: "SilverCare Agency",
-    score: "89",
-    summary: "Mandarin speaking with strong dementia routine support and relevant diabetes care exposure.",
-    traits: ["Language fit", "Dementia care", "8 years"],
-  },
-  {
-    name: "Ani Susanti",
-    agency: "Harmony Eldercare Placement",
-    score: "78",
-    summary: "Strong day-to-day eldercare support with useful mobility handling and medication reminder experience.",
-    traits: ["Mandarin", "Transfer support", "6 years"],
-  },
-  {
-    name: "Elena Ramos",
-    agency: "NestAid Services",
-    score: "74",
-    summary: "Warm dementia support profile with feeding and companionship experience for lower-intensity routines.",
-    traits: ["Companionship", "Feeding", "5 years"],
-  },
-]
+import {
+  formatDisplayLabel,
+  getBrowseCaregiverGalleryData,
+  getCareProfileById,
+  getSearchPreviewData,
+} from "../lib/data"
 
 export function SearchPage() {
+  const [searchParams] = useSearchParams()
+  const activeProfileId = searchParams.get("profile")
+  const activeProfile = activeProfileId ? getCareProfileById(activeProfileId) : null
+  const previewCaregivers = activeProfile
+    ? getSearchPreviewData()
+    : getBrowseCaregiverGalleryData()
+
   return (
     <section className="page-section">
       <PageHeader
         eyebrow="Search"
-        title="Search caregivers through the lens of a care profile."
-        description="This route is ready for ranked results, applied filters, and practical fit reasoning once the matching engine lands."
+        title={
+          activeProfile
+            ? "Search caregivers through the lens of a care profile."
+            : "Browse caregivers, then apply a care profile for tailored matching."
+        }
+        description={
+          activeProfile
+            ? "This route is ready for ranked results, applied filters, and practical fit reasoning once the matching engine lands."
+            : "Search can stand alone as a discovery surface, but profile-based matching is where Align becomes meaningfully specific."
+        }
       />
 
       <section className="search-stage">
         <div className="search-toolbar">
           <div>
-            <p className="panel-label">Active profile</p>
-            <h2>Madam Lim</h2>
+            <p className="panel-label">
+              {activeProfile ? "Active profile" : "Browse mode"}
+            </p>
+            <h2>{activeProfile ? activeProfile.name : "No care profile selected"}</h2>
           </div>
-          <div className="filter-pills" aria-label="Filter preview">
-            <span>Mandarin</span>
-            <span>Dementia</span>
-            <span>Walking assistance</span>
-          </div>
+          {activeProfile ? (
+            <div className="filter-pills" aria-label="Filter preview">
+              <span>{activeProfile.preferredLanguage}</span>
+              <span>{formatDisplayLabel(activeProfile.conditions[0])}</span>
+              <span>{formatDisplayLabel(activeProfile.mobilitySupport[0])}</span>
+            </div>
+          ) : (
+            <div className="toolbar-actions">
+              <p>Open a care profile from the employer workspace to see match percentages.</p>
+              <Link className="button-secondary" to="/">
+                Choose a care profile
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="gallery-grid" aria-label="Caregiver search preview">
           {previewCaregivers.map((caregiver, index) => (
-            <article className="caregiver-card" key={caregiver.name}>
+            <article className="caregiver-card" key={caregiver.id}>
               <div className="portrait-block">
                 <div className="portrait-frame">
                   <span>{caregiver.name.charAt(0)}</span>
                 </div>
-                <span className="score-token">{caregiver.score}% match</span>
+                {caregiver.matchPercent !== null ? (
+                  <span className="score-token">{caregiver.matchPercent}% match</span>
+                ) : null}
               </div>
 
               <div className="caregiver-card-copy">
                 <div>
-                  <p className="panel-label">{index === 0 ? "Top fit" : "Relevant fit"}</p>
+                  <p className="panel-label">
+                    {activeProfile
+                      ? index === 0
+                        ? "Top fit"
+                        : "Relevant fit"
+                      : "Caregiver profile"}
+                  </p>
                   <h2>{caregiver.name}</h2>
                   <p className="agency-line">{caregiver.agency}</p>
                 </div>
@@ -79,10 +95,11 @@ export function SearchPage() {
         </div>
 
         <aside className="result-sidebar">
-          <p className="panel-label">Search route</p>
+          <p className="panel-label">{activeProfile ? "Matched mode" : "Browse mode"}</p>
           <p>
-            This page now previews the gallery-style browsing direction. The next phase will swap
-            in real caregiver data, save actions, and score-based ordering.
+            {activeProfile
+              ? "This state is activated by opening search from a specific care profile. It will carry the profile context into ranking and rationale."
+              : "This generic browse state keeps search accessible from navigation without pretending a profile has already been selected."}
           </p>
           <Link className="button-secondary" to="/">
             Return to employer profile
