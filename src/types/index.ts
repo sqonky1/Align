@@ -80,3 +80,22 @@ export type SearchCaregiverCard = {
   alert: string | null
   breakdown: SearchCaregiverBreakdownItem[]
 }
+
+export type WorkspaceSavedCaregiverCard = {
+  id: string
+  caregiverId: string
+  careProfileId: string
+  name: string
+  agency: string
+  summary: string
+  note: string
+  traits: string[]
+}
+
+export type CareProfileWorkspaceCard = {
+  id: string
+  name: string
+  age: number
+  gender: "male" | "female"
+  preferredLanguage: string
+}

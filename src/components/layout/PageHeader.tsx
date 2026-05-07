@@ -9,7 +9,7 @@ export function PageHeader({ eyebrow, title, description }: PageHeaderProps) {
     <header className="page-header">
       {eyebrow ? <p className="page-eyebrow">{eyebrow}</p> : null}
       <h1>{title}</h1>
-      <p className="page-description">{description}</p>
+      {description ? <p className="page-description">{description}</p> : null}
     </header>
   )
 }

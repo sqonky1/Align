@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom"
 import { AppShell } from "../components/layout/AppShell"
+import { CareProfileDetailPage } from "../pages/CareProfileDetailPage"
 import { CaregiverDetailPage } from "../pages/CaregiverDetailPage"
 import { NewCareProfilePage } from "../pages/NewCareProfilePage"
 import { NotFoundPage } from "../pages/NotFoundPage"
@@ -22,6 +23,10 @@ export const router = createBrowserRouter([
       {
         path: "profiles/:profileId/edit",
         element: <NewCareProfilePage />,
+      },
+      {
+        path: "profiles/:profileId",
+        element: <CareProfileDetailPage />,
       },
       {
         path: "search",

@@ -4,9 +4,11 @@ import { careProfiles } from "../data/careProfiles"
 import { savedCaregivers } from "../data/savedCaregivers"
 import { getRankedCaregiverMatches } from "./matching"
 import type {
+  CareProfileWorkspaceCard,
   CareProfile,
   SearchCaregiverBreakdownItem,
   SearchCaregiverCard,
+  WorkspaceSavedCaregiverCard,
 } from "../types"
 
 const CARE_PROFILES_STORAGE_KEY = "align.careProfiles"
@@ -50,21 +52,19 @@ export function getSavedCaregiverLinks() {
   return savedCaregivers
 }
 
-export function getCareProfileCardData() {
+export function getCareProfileCardData(): CareProfileWorkspaceCard[] {
   const profiles = getCareProfiles()
 
   return profiles.map((profile) => ({
     id: profile.id,
     name: profile.name,
-    summary: `${profile.age} years old`,
-    details: [
-      ...profile.conditions.slice(0, 2).map(formatLabel),
-      profile.preferredLanguage,
-    ],
+    age: profile.age,
+    gender: profile.gender,
+    preferredLanguage: profile.preferredLanguage,
   }))
 }
 
-export function getSavedCaregiverGalleryData() {
+export function getSavedCaregiverGalleryData(): WorkspaceSavedCaregiverCard[] {
   const profiles = getCareProfiles()
 
   return savedCaregivers.flatMap((saved) => {
@@ -78,7 +78,11 @@ export function getSavedCaregiverGalleryData() {
     return [
       {
         id: saved.id,
+        caregiverId: caregiver.id,
+        careProfileId: profile.id,
         name: caregiver.name,
+        agency: caregiver.agencyName,
+        summary: caregiver.bio,
         note: `Saved for ${profile.name}`,
         traits: [
           formatLabel(caregiver.careConditions[0] ?? "general support"),
