@@ -2,9 +2,10 @@ import { agencies } from "../data/agencies"
 import { caregivers } from "../data/caregivers"
 import { careProfiles } from "../data/careProfiles"
 import { savedCaregivers } from "../data/savedCaregivers"
-import { getRankedCaregiverMatches } from "./matching"
+import { getCaregiverLanguageDisplay, getRankedCaregiverMatches } from "./matching"
 import type {
   CareProfileWorkspaceCard,
+  Caregiver,
   CareProfile,
   SearchCaregiverBreakdownItem,
   SearchCaregiverCard,
@@ -38,6 +39,11 @@ export function saveCareProfile(profile: CareProfile) {
   writeStoredCareProfiles(nextProfiles)
 
   return profile
+}
+
+export function deleteCareProfile(profileId: string) {
+  const nextProfiles = getCareProfiles().filter((profile) => profile.id !== profileId)
+  writeStoredCareProfiles(nextProfiles)
 }
 
 export function getCaregivers() {
@@ -105,7 +111,7 @@ export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCareg
     alert: result.alert,
     breakdown: result.breakdown
       .filter((item) => item.maxScore > 0)
-      .map((item) => toSearchBreakdownItem(item)),
+      .map((item) => toSearchBreakdownItem(item, result.caregiver, profile.preferredLanguage)),
   }))
 }
 
@@ -117,9 +123,9 @@ export function getBrowseCaregiverGalleryData(): SearchCaregiverCard[] {
     matchPercent: null,
     summary: caregiver.bio,
     traits: [
-      caregiver.languages[0] ?? "Language not set",
-      formatLabel(caregiver.careConditions[0] ?? "general support"),
-      `${caregiver.yearsOfExperience} years`,
+      { label: getCaregiverLanguageDisplay(caregiver) },
+      { label: formatLabel(caregiver.careConditions[0] ?? "general support") },
+      { label: `${caregiver.yearsOfExperience} years` },
     ],
     alert: null,
     breakdown: [],
@@ -142,7 +148,7 @@ function toSearchBreakdownItem(item: {
   maxScore: number
   matchedValues: string[]
   missingValues: string[]
-}): SearchCaregiverBreakdownItem {
+}, caregiver: Caregiver, preferredLanguage: string): SearchCaregiverBreakdownItem {
   const scorePercent = item.maxScore > 0 ? Math.round((item.score / item.maxScore) * 100) : 0
 
   if (item.key === "language") {
@@ -150,7 +156,7 @@ function toSearchBreakdownItem(item: {
       key: item.key,
       label: item.label,
       scorePercent,
-      summary: item.matchedValues[0] ?? `Missing ${item.missingValues[0] ?? "language"}`,
+      summary: getCaregiverLanguageDisplay(caregiver, preferredLanguage),
     }
   }
 

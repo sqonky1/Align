@@ -1,10 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap");
 
 :root {
-  --bg: #f5f0e6;
+  --bg: #f2efe9;
   --surface: #fffdf8;
+  --surface-paper: #fcfaf7;
   --surface-alt: #efe7d8;
   --text: #1f2a2a;
+  --heading: #1a2421;
   --text-muted: #5f6b68;
   --primary: #1f5c52;
   --primary-strong: #17463f;
@@ -43,8 +45,9 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at top left, rgba(232, 201, 143, 0.28), transparent 30%),
-    linear-gradient(180deg, #f7f2e8 0%, var(--bg) 100%);
+    radial-gradient(circle at top center, rgba(255, 255, 255, 0.08), transparent 34%),
+    radial-gradient(circle at left top, rgba(244, 240, 233, 0.1), transparent 26%),
+    linear-gradient(180deg, #f4f1eb 0%, var(--bg) 100%);
   color: var(--text);
 }
 
@@ -76,7 +79,7 @@ h1,
 h2,
 h3 {
   font-family: var(--font-heading);
-  color: var(--text);
+  color: var(--heading);
   letter-spacing: -0.03em;
 }
 
@@ -84,7 +87,7 @@ h3 {
   min-height: 100vh;
   width: 100%;
   background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.75), rgba(255, 253, 248, 0.88)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
     transparent;
 }
 
@@ -246,9 +249,10 @@ h3 {
 }
 
 .button-secondary {
-  background: transparent;
+  background: rgba(255, 254, 250, 0.88);
   border-color: rgba(31, 92, 82, 0.2);
   color: var(--primary-strong);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .profile-hero,
@@ -354,7 +358,8 @@ h3 {
 .profile-card-top,
 .caregiver-card-copy,
 .saved-card-copy,
-.profile-card-actions-stack {
+.profile-card-actions-stack,
+.profile-card-footer-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -447,6 +452,16 @@ h3 {
   z-index: 2;
 }
 
+.profile-card-footer-actions {
+  position: relative;
+  z-index: 3;
+  margin-top: auto;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
 .profile-card-context-label {
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -476,10 +491,56 @@ h3 {
   box-shadow: 0 8px 18px rgba(31, 42, 42, 0.06);
 }
 
+.profile-card-action-match {
+  margin-left: auto;
+}
+
 .profile-card-action:hover,
 .profile-card-action:focus-visible {
   border-color: rgba(31, 92, 82, 0.3);
   background: rgba(31, 92, 82, 0.08);
+}
+
+.profile-card-icon-action {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.profile-card-icon-action-edit {
+  color: var(--primary);
+}
+
+.profile-card-icon-action-delete {
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.profile-card-icon-action svg {
+  width: 22px;
+  height: 22px;
+}
+
+.profile-card-icon-action:hover,
+.profile-card-icon-action:focus-visible {
+  opacity: 0.82;
+}
+
+.profile-card-icon-action-edit:hover,
+.profile-card-icon-action-edit:focus-visible {
+  color: var(--primary-strong);
+}
+
+.profile-card-icon-action-delete:hover,
+.profile-card-icon-action-delete:focus-visible {
+  color: #a64d40;
 }
 
 .profile-card-anchor {
@@ -592,9 +653,9 @@ h3 {
 .caregiver-card {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
   height: 100%;
-  padding: 1.125rem;
+  padding: 1rem;
   border-radius: var(--radius-md);
 }
 
@@ -602,7 +663,7 @@ h3 {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
 }
 
 .portrait-block-compact {
@@ -613,7 +674,7 @@ h3 {
   display: grid;
   place-items: center;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 2.72;
   max-width: 100%;
   border-radius: 18px;
   background:
@@ -635,23 +696,24 @@ h3 {
 .agency-line {
   color: var(--primary);
   font-weight: 700;
+  margin-top: 4px;
 }
 
 .trait-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .trait-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
-  padding: 0 10px;
+  min-height: 28px;
+  padding: 0 8px;
   border-radius: 999px;
   background: rgba(31, 92, 82, 0.08);
   color: var(--primary-strong);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
@@ -902,6 +964,16 @@ h3 {
   gap: 20px;
 }
 
+.search-content-shell {
+  padding: clamp(20px, 2.5vw, 28px) clamp(24px, 3vw, 34px) clamp(24px, 3vw, 34px);
+  border: 1px solid rgba(214, 211, 209, 0.3);
+  border-radius: clamp(24px, 3vw, 32px);
+  background: var(--surface-paper);
+  box-shadow:
+    0 1px 3px rgba(26, 36, 33, 0.03),
+    0 18px 52px rgba(26, 36, 33, 0.035);
+}
+
 .search-browse-actions {
   display: flex;
   align-items: center;
@@ -1005,7 +1077,12 @@ h3 {
   flex: 1;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+}
+
+.caregiver-card-copy h2 {
+  font-size: clamp(1.38rem, 2.1vw, 1.94rem);
+  line-height: 1.04;
 }
 
 .saved-card-copy {
@@ -1035,12 +1112,12 @@ h3 {
 
 .ranked-featured-list {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .caregiver-card-ranked {
-  padding: 18px;
-  gap: 14px;
+  padding: 16px;
+  gap: 12px;
 }
 
 .caregiver-card-rank-gold {
@@ -1075,13 +1152,13 @@ h3 {
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
 }
 
 .ranked-card-heading {
   flex-direction: row;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .rank-token {
@@ -1117,7 +1194,7 @@ h3 {
 .ranked-card-body {
   display: grid;
   grid-template-columns: 120px minmax(0, 1fr);
-  gap: 14px;
+  gap: 12px;
   align-items: start;
 }
 
@@ -1126,7 +1203,7 @@ h3 {
 }
 
 .ranked-card-portrait .portrait-frame {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 0.92;
   border-radius: 16px;
   font-size: 1.58rem;
 }
@@ -1134,18 +1211,23 @@ h3 {
 .breakdown-chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .breakdown-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 28px;
+  padding: 0 8px;
   border-radius: 999px;
-  font-size: 0.84rem;
+  font-size: 0.79rem;
   font-weight: 700;
+}
+
+.result-summary {
+  font-size: 0.94rem;
+  line-height: 1.48;
 }
 
 .breakdown-chip-strong {
@@ -1381,8 +1463,8 @@ h3 {
 
 .caregiver-card-compact {
   gap: 0.75rem;
-  padding: 0.95rem;
-  padding-top: 1.2rem;
+  padding: 0.88rem;
+  padding-top: 1.08rem;
 }
 
 .caregiver-card-compact .portrait-block {
@@ -1395,6 +1477,7 @@ h3 {
 }
 
 .caregiver-card-compact .portrait-frame {
+  aspect-ratio: 16 / 8;
   border-radius: 1.25rem;
   font-size: 1.35rem;
 }
@@ -1422,18 +1505,19 @@ h3 {
 .caregiver-card-compact .caregiver-card-copy > div {
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
+  gap: 0.12rem;
   padding-right: 5.4rem;
 }
 
 .caregiver-card-compact .caregiver-card-copy h2 {
-  font-size: clamp(1.05rem, 1.65vw, 1.4rem);
-  line-height: 0.98;
+  font-size: clamp(1rem, 1.5vw, 1.24rem);
+  line-height: 1;
 }
 
 .caregiver-card-compact .agency-line {
   font-size: 0.88rem;
   font-weight: 600;
+  margin-top: 5px;
 }
 
 .caregiver-card-compact .toolbar-caption {
@@ -1452,10 +1536,30 @@ h3 {
   padding-top: 0.2rem;
 }
 
+.caregiver-card-compact .breakdown-chip-list {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  align-content: flex-start;
+  gap: 0.45rem;
+  justify-content: start;
+  margin-top: 0;
+  padding-top: 0.2rem;
+}
+
 .caregiver-card-compact .trait-chip {
   min-height: 1.75rem;
-  padding: 0 0.7rem;
-  font-size: 0.82rem;
+  padding: 0 0.55rem;
+  font-size: 0.76rem;
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.caregiver-card-compact .breakdown-chip {
+  min-height: 1.75rem;
+  padding: 0 0.55rem;
+  font-size: 0.76rem;
   width: fit-content;
   max-width: 100%;
   white-space: nowrap;

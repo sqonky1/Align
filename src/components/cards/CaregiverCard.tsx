@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom"
+import type { SearchCaregiverPill } from "../../types"
 
 type CaregiverCardProps = {
   href: string
   name: string
   agency: string
   summary?: string
-  traits: string[]
+  traits: Array<string | SearchCaregiverPill>
   matchPercent?: number | null
   secondaryText?: string
   cornerText?: string
@@ -51,14 +52,25 @@ export function CaregiverCard({
 
         {summary ? <p className="result-summary">{summary}</p> : null}
 
-        <div className="trait-chips">
+        <div className={traits.some((trait) => typeof trait !== "string" && trait.tone) ? "breakdown-chip-list" : "trait-chips"}>
           {traits.map((trait) => (
-            <span className="trait-chip" key={trait}>
-              {trait}
+            <span
+              className={getTraitClassName(trait)}
+              key={typeof trait === "string" ? trait : `${trait.label}-${trait.tone ?? "default"}`}
+            >
+              {typeof trait === "string" ? trait : trait.label}
             </span>
           ))}
         </div>
       </div>
     </Link>
   )
+}
+
+function getTraitClassName(trait: string | SearchCaregiverPill) {
+  if (typeof trait === "string" || !trait.tone) {
+    return "trait-chip"
+  }
+
+  return `breakdown-chip breakdown-chip-${trait.tone}`
 }

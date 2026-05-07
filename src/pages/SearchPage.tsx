@@ -34,116 +34,118 @@ export function SearchPage() {
     <section className="page-section">
       <PageHeader title="Search" description="" />
 
-      <section className="search-stage">
-        {isMatchedMode && activeProfile ? (
-          <section className="search-profile-stage" aria-label="Anchor profile">
-            <CareProfileCard profile={activeProfile} showActions={false} variant="anchor" />
-            <div className="search-results-meta">
-              <p className="panel-label">Results</p>
-              <p className="toolbar-caption">{searchResults.length} caregivers ranked by structured fit</p>
-            </div>
-          </section>
-        ) : (
-          <div className="search-browse-actions">
-            <button
-              className="button-secondary"
-              onClick={() => setIsPickerOpen(true)}
-              type="button"
-            >
-              Match to care recipient
-            </button>
-            <p className="toolbar-caption">{searchResults.length} caregivers available to browse</p>
-          </div>
-        )}
-
-        {isMatchedMode ? (
-          <>
-            <section className="ranked-featured-list" aria-label="Top ranked caregivers">
-              {featuredResults.map((caregiver, index) => (
-                <Link
-                  className={`caregiver-card caregiver-card-link caregiver-card-ranked ${getFeaturedCardClass(index)}`}
-                  key={caregiver.id}
-                  to={getCaregiverDetailHref(caregiver.id, activeProfile?.id)}
-                >
-                  <div className="ranked-card-header">
-                    <div className="ranked-card-heading">
-                      <span className="rank-token">#{index + 1}</span>
-                      <div>
-                        <h2>{caregiver.name}</h2>
-                        <p className="agency-line">{caregiver.agency}</p>
-                      </div>
-                    </div>
-
-                    {caregiver.matchPercent !== null ? (
-                      <span className="score-token">{caregiver.matchPercent}% match</span>
-                    ) : null}
-                  </div>
-
-                  <div className="ranked-card-body">
-                    <div className="ranked-card-portrait">
-                      <div className="portrait-frame">
-                        <span>{caregiver.name.charAt(0)}</span>
-                      </div>
-                    </div>
-
-                    <div className="caregiver-card-copy">
-                      <p className="result-summary">{caregiver.summary}</p>
-                      {caregiver.alert ? <p className="fit-alert">{caregiver.alert}</p> : null}
-
-                      <div className="breakdown-chip-list" aria-label={`${caregiver.name} fit breakdown`}>
-                        {caregiver.breakdown.map((item) => (
-                          <span
-                            className={`breakdown-chip ${getBreakdownStatusClass(item)}`}
-                            key={item.key}
-                          >
-                            {item.label}: {item.summary}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+      <div className="search-content-shell">
+        <section className="search-stage">
+          {isMatchedMode && activeProfile ? (
+            <section className="search-profile-stage" aria-label="Anchor profile">
+              <CareProfileCard profile={activeProfile} showActions={false} variant="anchor" />
+              <div className="search-results-meta">
+                <p className="panel-label">Results</p>
+                <p className="toolbar-caption">{searchResults.length} caregivers ranked by structured fit</p>
+              </div>
             </section>
+          ) : (
+            <div className="search-browse-actions">
+              <button
+                className="button-secondary"
+                onClick={() => setIsPickerOpen(true)}
+                type="button"
+              >
+                Match to care recipient
+              </button>
+              <p className="toolbar-caption">{searchResults.length} caregivers available to browse</p>
+            </div>
+          )}
 
-            {remainingResults.length > 0 ? (
-              <section className="section-shell">
-                <div className="section-header section-header-tight">
-                  <h2>More caregivers</h2>
-                </div>
+          {isMatchedMode ? (
+            <>
+              <section className="ranked-featured-list" aria-label="Top ranked caregivers">
+                {featuredResults.map((caregiver, index) => (
+                  <Link
+                    className={`caregiver-card caregiver-card-link caregiver-card-ranked ${getFeaturedCardClass(index)}`}
+                    key={caregiver.id}
+                    to={getCaregiverDetailHref(caregiver.id, activeProfile?.id)}
+                  >
+                    <div className="ranked-card-header">
+                      <div className="ranked-card-heading">
+                        <span className="rank-token">#{index + 1}</span>
+                        <div>
+                          <h2>{caregiver.name}</h2>
+                          <p className="agency-line">{caregiver.agency}</p>
+                        </div>
+                      </div>
 
-                <div className="matched-gallery-grid" aria-label="More ranked caregivers">
-                  {remainingResults.map((caregiver, index) => (
-                    <CaregiverCard
-                      agency={caregiver.agency}
-                      compact
-                      cornerText={`#${index + 4}`}
-                      href={getCaregiverDetailHref(caregiver.id, activeProfile?.id)}
-                      key={caregiver.id}
-                      matchPercent={caregiver.matchPercent}
-                      name={caregiver.name}
-                      traits={caregiver.traits}
-                    />
-                  ))}
-                </div>
+                      {caregiver.matchPercent !== null ? (
+                        <span className="score-token">{caregiver.matchPercent}% match</span>
+                      ) : null}
+                    </div>
+
+                    <div className="ranked-card-body">
+                      <div className="ranked-card-portrait">
+                        <div className="portrait-frame">
+                          <span>{caregiver.name.charAt(0)}</span>
+                        </div>
+                      </div>
+
+                      <div className="caregiver-card-copy">
+                        <p className="result-summary">{caregiver.summary}</p>
+                        {caregiver.alert ? <p className="fit-alert">{caregiver.alert}</p> : null}
+
+                        <div className="breakdown-chip-list" aria-label={`${caregiver.name} fit breakdown`}>
+                          {caregiver.breakdown.map((item) => (
+                            <span
+                              className={`breakdown-chip ${getBreakdownStatusClass(item)}`}
+                              key={item.key}
+                            >
+                              {item.label}: {item.summary}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </section>
-            ) : null}
-          </>
-        ) : (
-          <div className="gallery-grid" aria-label="Caregiver search results">
-            {remainingResults.map((caregiver) => (
-              <CaregiverCard
-                agency={caregiver.agency}
-                href={getCaregiverDetailHref(caregiver.id)}
-                key={caregiver.id}
-                name={caregiver.name}
-                summary={caregiver.summary}
-                traits={caregiver.traits}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+
+              {remainingResults.length > 0 ? (
+                <section className="section-shell">
+                  <div className="section-header section-header-tight">
+                    <h2>More caregivers</h2>
+                  </div>
+
+                  <div className="matched-gallery-grid" aria-label="More ranked caregivers">
+                    {remainingResults.map((caregiver, index) => (
+                      <CaregiverCard
+                        agency={caregiver.agency}
+                        compact
+                        cornerText={`#${index + 4}`}
+                        href={getCaregiverDetailHref(caregiver.id, activeProfile?.id)}
+                        key={caregiver.id}
+                        matchPercent={caregiver.matchPercent}
+                        name={caregiver.name}
+                        traits={caregiver.traits}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </>
+          ) : (
+            <div className="gallery-grid" aria-label="Caregiver search results">
+              {remainingResults.map((caregiver) => (
+                <CaregiverCard
+                  agency={caregiver.agency}
+                  href={getCaregiverDetailHref(caregiver.id)}
+                  key={caregiver.id}
+                  name={caregiver.name}
+                  summary={caregiver.summary}
+                  traits={caregiver.traits}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       {isPickerOpen ? (
         <div

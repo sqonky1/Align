@@ -70,12 +70,19 @@ export type SearchCaregiverBreakdownItem = {
   summary: string
 }
 
+export type SearchCaregiverPillTone = "strong" | "partial" | "gap"
+
+export type SearchCaregiverPill = {
+  label: string
+  tone?: SearchCaregiverPillTone
+}
+
 export type SearchCaregiverCard = {
   id: string
   name: string
   agency: string
   summary: string
-  traits: string[]
+  traits: SearchCaregiverPill[]
   matchPercent: number | null
   alert: string | null
   breakdown: SearchCaregiverBreakdownItem[]

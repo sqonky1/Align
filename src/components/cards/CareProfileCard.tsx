@@ -6,6 +6,7 @@ type CareProfileCardProps = {
   profile: CareProfileWorkspaceCard
   href?: string
   onSelect?: (() => void) | undefined
+  onDelete?: (() => void) | undefined
   showActions?: boolean
   className?: string
   variant?: "default" | "anchor" | "picker"
@@ -15,6 +16,7 @@ export function CareProfileCard({
   profile,
   href = `/profiles/${profile.id}`,
   onSelect,
+  onDelete,
   showActions = true,
   className,
   variant = "default",
@@ -52,16 +54,10 @@ export function CareProfileCard({
         </span>
 
         {showActions ? (
-          <div className="profile-card-actions-stack">
-            <Link className="profile-card-action" to={`/profiles/${profile.id}/edit`}>
-              <PencilIcon />
-              <span>Edit profile</span>
-            </Link>
-            <Link className="profile-card-action" to={`/search?profile=${profile.id}`}>
-              <SearchIcon />
-              <span>Find a match</span>
-            </Link>
-          </div>
+          <Link className="profile-card-action profile-card-action-match" to={`/search?profile=${profile.id}`}>
+            <SearchIcon />
+            <span>Find a match</span>
+          </Link>
         ) : null}
       </div>
 
@@ -75,6 +71,28 @@ export function CareProfileCard({
           {profile.preferredLanguage}
         </p>
       </div>
+
+      {showActions ? (
+        <div className="profile-card-footer-actions">
+          {onDelete ? (
+            <button
+              aria-label={`Delete ${profile.name} care profile`}
+              className="profile-card-icon-action profile-card-icon-action-delete"
+              onClick={onDelete}
+              type="button"
+            >
+              <TrashIcon />
+            </button>
+          ) : null}
+          <Link
+            aria-label={`Edit ${profile.name} care profile`}
+            className="profile-card-icon-action profile-card-icon-action-edit"
+            to={`/profiles/${profile.id}/edit`}
+          >
+            <PencilIcon />
+          </Link>
+        </div>
+      ) : null}
     </article>
   )
 }
@@ -101,6 +119,32 @@ function SearchIcon() {
         d="m10.5 10.5 3 3"
         stroke="currentColor"
         strokeLinecap="round"
+        strokeWidth="1.4"
+      />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 16 16" width="16">
+      <path
+        d="M2.667 4h10.666"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M6 2.667h4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M5.333 6.667v4.666M8 6.667v4.666m2.667-4.666v4.666M4 4l.667 8.667A1.333 1.333 0 0 0 6 14h4a1.333 1.333 0 0 0 1.333-1.333L12 4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         strokeWidth="1.4"
       />
     </svg>

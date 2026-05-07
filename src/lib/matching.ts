@@ -1,4 +1,4 @@
-import type { CareProfile, Caregiver } from "../types"
+import type { CareProfile, Caregiver, SearchCaregiverPill, SearchCaregiverPillTone } from "../types"
 
 const MATCH_WEIGHTS = {
   language: 32,
@@ -34,7 +34,7 @@ export type CaregiverMatchResult = {
   breakdown: MatchDimensionResult[]
   summary: string
   alert: string | null
-  traits: string[]
+  traits: SearchCaregiverPill[]
 }
 
 export function getRankedCaregiverMatches(
@@ -313,40 +313,89 @@ function buildMatchTraits(
   caregiver: Caregiver,
   breakdown: MatchDimensionResult[],
 ) {
-  const traits: string[] = []
+  const traits: SearchCaregiverPill[] = []
   const language = breakdown.find((item) => item.key === "language")
   const conditions = breakdown.find((item) => item.key === "conditions")
   const dailyCareTasks = breakdown.find((item) => item.key === "dailyCareTasks")
   const mobilitySupport = breakdown.find((item) => item.key === "mobilitySupport")
   const medicationSupport = breakdown.find((item) => item.key === "medicationSupport")
+  const experience = breakdown.find((item) => item.key === "experience")
 
-  if (language?.matchedValues.length) {
-    traits.push(language.matchedValues[0])
-  } else if (profile.preferredLanguage.trim().length > 0) {
-    traits.push(`No ${profile.preferredLanguage}`)
+  if (language && profile.preferredLanguage.trim().length > 0) {
+    traits.push({
+      label: getCaregiverLanguageDisplay(caregiver, profile.preferredLanguage),
+      tone: getDimensionTone(language),
+    })
   }
 
   if (conditions && profile.conditions.length > 0) {
-    traits.push(`${conditions.matchedValues.length}/${profile.conditions.length} conditions`)
+    traits.push({
+      label: `${conditions.matchedValues.length}/${profile.conditions.length} conditions`,
+      tone: getDimensionTone(conditions),
+    })
   }
 
   if (dailyCareTasks && profile.dailyCareTasks.length > 0) {
-    traits.push(`${dailyCareTasks.matchedValues.length}/${profile.dailyCareTasks.length} daily tasks`)
+    traits.push({
+      label: `${dailyCareTasks.matchedValues.length}/${profile.dailyCareTasks.length} daily tasks`,
+      tone: getDimensionTone(dailyCareTasks),
+    })
   }
 
   if (mobilitySupport && profile.mobilitySupport.length > 0) {
-    traits.push(`${mobilitySupport.matchedValues.length}/${profile.mobilitySupport.length} mobility`)
+    traits.push({
+      label: `${mobilitySupport.matchedValues.length}/${profile.mobilitySupport.length} mobility`,
+      tone: getDimensionTone(mobilitySupport),
+    })
   }
 
   if (medicationSupport && profile.medicationSupport.length > 0) {
-    traits.push(
-      `${medicationSupport.matchedValues.length}/${profile.medicationSupport.length} medication`,
-    )
+    traits.push({
+      label: `${medicationSupport.matchedValues.length}/${profile.medicationSupport.length} medication`,
+      tone: getDimensionTone(medicationSupport),
+    })
   }
 
-  traits.push(`${caregiver.yearsOfExperience} years`)
+  if (experience) {
+    traits.push({
+      label: `${caregiver.yearsOfExperience} years`,
+      tone: getDimensionTone(experience),
+    })
+  }
 
   return traits.slice(0, 4)
+}
+
+function getDimensionTone(item: MatchDimensionResult): SearchCaregiverPillTone {
+  if (item.maxScore > 0 && item.score === item.maxScore) {
+    return "strong"
+  }
+
+  if (item.score === 0) {
+    return "gap"
+  }
+
+  return "partial"
+}
+
+export function getCaregiverLanguageDisplay(
+  caregiverOrLanguages: Caregiver | string[],
+  preferredLanguage?: string,
+) {
+  const normalizedPreferredLanguage = preferredLanguage?.trim()
+  const languages = Array.isArray(caregiverOrLanguages)
+    ? caregiverOrLanguages
+    : caregiverOrLanguages.languages
+
+  if (
+    normalizedPreferredLanguage &&
+    normalizedPreferredLanguage.length > 0 &&
+    languages.includes(normalizedPreferredLanguage)
+  ) {
+    return formatLanguageDisplayLabel(normalizedPreferredLanguage)
+  }
+
+  return formatLanguageDisplayLabel(languages[0] ?? "Language not set")
 }
 
 function describeCoverage(label: string, matchedCount: number, requestedCount: number) {
@@ -386,4 +435,12 @@ function formatDisplayLabel(value: string) {
     .split("_")
     .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
     .join(" ")
+}
+
+function formatLanguageDisplayLabel(value: string) {
+  if (value === "Malay") {
+    return "Bahasa Melayu"
+  }
+
+  return value
 }

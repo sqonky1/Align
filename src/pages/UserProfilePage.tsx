@@ -1,15 +1,32 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 import { CaregiverCard } from "../components/cards/CaregiverCard"
 import { CareProfileCard } from "../components/cards/CareProfileCard"
 import { PageHeader } from "../components/layout/PageHeader"
 import {
+  deleteCareProfile,
   getCareProfileCardData,
   getSavedCaregiverGalleryData,
 } from "../lib/data"
 
 export function UserProfilePage() {
-  const careProfiles = getCareProfileCardData()
+  const [careProfiles, setCareProfiles] = useState(() => getCareProfileCardData())
   const savedCaregivers = getSavedCaregiverGalleryData()
+
+  function handleDeleteProfile(profileId: string) {
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm("Delete this care recipient profile?")
+
+      if (!confirmed) {
+        return
+      }
+    }
+
+    deleteCareProfile(profileId)
+    setCareProfiles((currentProfiles) =>
+      currentProfiles.filter((profile) => profile.id !== profileId),
+    )
+  }
 
   return (
     <section className="page-section">
@@ -25,7 +42,11 @@ export function UserProfilePage() {
 
         <div className="profile-card-grid" aria-label="Care profiles">
           {careProfiles.map((profile) => (
-            <CareProfileCard key={profile.id} profile={profile} />
+            <CareProfileCard
+              key={profile.id}
+              onDelete={() => handleDeleteProfile(profile.id)}
+              profile={profile}
+            />
           ))}
         </div>
       </section>

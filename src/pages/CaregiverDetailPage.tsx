@@ -7,6 +7,7 @@ import {
   getCareProfileById,
 } from "../lib/data"
 import {
+  getCaregiverLanguageDisplay,
   getRankedCaregiverMatches,
   scoreCaregiverMatch,
   type MatchDimensionResult,
@@ -158,7 +159,7 @@ export function CaregiverDetailPage() {
                             className={`breakdown-chip ${getBreakdownStatusClass(item)}`}
                             key={item.key}
                           >
-                            {item.label}: {getBreakdownChipCopy(item)}
+                            {item.label}: {getBreakdownChipCopy(item, caregiver.languages, activeProfile?.preferredLanguage)}
                           </span>
                         ))}
                     </div>
@@ -313,9 +314,13 @@ function getDetailFitCardClass(item: MatchDimensionResult) {
   return "detail-fit-card-partial"
 }
 
-function getBreakdownChipCopy(item: MatchDimensionResult) {
+function getBreakdownChipCopy(
+  item: MatchDimensionResult,
+  caregiverLanguages: string[],
+  preferredLanguage?: string,
+) {
   if (item.key === "language") {
-    return item.matchedValues[0] ?? `Missing ${item.missingValues[0] ?? "language"}`
+    return getCaregiverLanguageDisplay(caregiverLanguages, preferredLanguage)
   }
 
   if (item.key === "experience") {
