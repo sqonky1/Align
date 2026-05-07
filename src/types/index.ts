@@ -63,14 +63,6 @@ export type SavedCaregiver = {
   savedAt: string
 }
 
-export type SearchPreviewResult = {
-  careProfileId: string
-  caregiverId: string
-  matchPercent: number
-  summary: string
-  traits: string[]
-}
-
 export type SearchCaregiverCard = {
   id: string
   name: string
@@ -78,4 +70,5 @@ export type SearchCaregiverCard = {
   summary: string
   traits: string[]
   matchPercent: number | null
+  alert: string | null
 }

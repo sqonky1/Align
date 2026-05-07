@@ -375,8 +375,10 @@ h3 {
 .callout-panel p,
 .profile-aside p,
 .editor-notes p,
+.toolbar-caption,
 .result-sidebar p,
-.result-summary {
+.result-summary,
+.fit-alert {
   color: var(--text-muted);
 }
 
@@ -769,6 +771,10 @@ h3 {
   max-width: 34ch;
 }
 
+.toolbar-caption {
+  margin-top: 6px;
+}
+
 .filter-pills span {
   display: inline-flex;
   align-items: center;
@@ -797,6 +803,11 @@ h3 {
 
 .saved-card-copy {
   gap: 10px;
+}
+
+.fit-alert {
+  padding-top: 12px;
+  border-top: 1px solid rgba(216, 208, 194, 0.8);
 }
 
 .signal-grid {

@@ -1,7 +1,8 @@
 import { agencies } from "../data/agencies"
 import { caregivers } from "../data/caregivers"
 import { careProfiles } from "../data/careProfiles"
-import { savedCaregivers, searchPreviewResults } from "../data/savedCaregivers"
+import { savedCaregivers } from "../data/savedCaregivers"
+import { getRankedCaregiverMatches } from "./matching"
 import type { CareProfile, SearchCaregiverCard } from "../types"
 
 const CARE_PROFILES_STORAGE_KEY = "align.careProfiles"
@@ -82,29 +83,20 @@ export function getSavedCaregiverGalleryData() {
   })
 }
 
-export function getSearchPreviewData(): SearchCaregiverCard[] {
-  return searchPreviewResults.flatMap((result) => {
-    const caregiver = caregivers.find((entry) => entry.id === result.caregiverId)
-
-    if (!caregiver) {
-      return []
-    }
-
-    return [
-      {
-        id: caregiver.id,
-        name: caregiver.name,
-        agency: caregiver.agencyName,
-        matchPercent: result.matchPercent,
-        summary: result.summary,
-        traits: result.traits,
-      },
-    ]
-  })
+export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCaregiverCard[] {
+  return getRankedCaregiverMatches(profile, caregivers).map((result) => ({
+    id: result.caregiver.id,
+    name: result.caregiver.name,
+    agency: result.caregiver.agencyName,
+    matchPercent: result.matchPercent,
+    summary: result.summary,
+    traits: result.traits,
+    alert: result.alert,
+  }))
 }
 
 export function getBrowseCaregiverGalleryData(): SearchCaregiverCard[] {
-  return caregivers.slice(0, 4).map((caregiver) => ({
+  return caregivers.map((caregiver) => ({
     id: caregiver.id,
     name: caregiver.name,
     agency: caregiver.agencyName,
@@ -115,6 +107,7 @@ export function getBrowseCaregiverGalleryData(): SearchCaregiverCard[] {
       formatLabel(caregiver.careConditions[0] ?? "general support"),
       `${caregiver.yearsOfExperience} years`,
     ],
+    alert: null,
   }))
 }
 
