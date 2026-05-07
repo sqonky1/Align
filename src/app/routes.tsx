@@ -19,6 +19,10 @@ export const router = createBrowserRouter([
         element: <NewCareProfilePage />,
       },
       {
+        path: "profiles/:profileId/edit",
+        element: <NewCareProfilePage />,
+      },
+      {
         path: "search",
         element: <SearchPage />,
       },

@@ -2,18 +2,35 @@ import { agencies } from "../data/agencies"
 import { caregivers } from "../data/caregivers"
 import { careProfiles } from "../data/careProfiles"
 import { savedCaregivers, searchPreviewResults } from "../data/savedCaregivers"
-import type { CareProfileStatus, SearchCaregiverCard } from "../types"
+import type { CareProfile, SearchCaregiverCard } from "../types"
+
+const CARE_PROFILES_STORAGE_KEY = "align.careProfiles"
 
 export function getAgencies() {
   return agencies
 }
 
 export function getCareProfiles() {
-  return careProfiles
+  return readStoredCareProfiles() ?? careProfiles
 }
 
 export function getCareProfileById(profileId: string) {
-  return careProfiles.find((profile) => profile.id === profileId) ?? null
+  return getCareProfiles().find((profile) => profile.id === profileId) ?? null
+}
+
+export function saveCareProfile(profile: CareProfile) {
+  const nextProfiles = [...getCareProfiles()]
+  const existingIndex = nextProfiles.findIndex((entry) => entry.id === profile.id)
+
+  if (existingIndex >= 0) {
+    nextProfiles[existingIndex] = profile
+  } else {
+    nextProfiles.unshift(profile)
+  }
+
+  writeStoredCareProfiles(nextProfiles)
+
+  return profile
 }
 
 export function getCaregivers() {
@@ -25,7 +42,9 @@ export function getSavedCaregiverLinks() {
 }
 
 export function getCareProfileCardData() {
-  return careProfiles.map((profile) => ({
+  const profiles = getCareProfiles()
+
+  return profiles.map((profile) => ({
     id: profile.id,
     name: profile.name,
     summary: `${profile.age} years old`,
@@ -33,14 +52,16 @@ export function getCareProfileCardData() {
       ...profile.conditions.slice(0, 2).map(formatLabel),
       profile.preferredLanguage,
     ],
-    status: formatStatus(profile.status),
+    readinessLabel: isCareProfileSearchReady(profile) ? "Search ready" : "Needs details",
   }))
 }
 
 export function getSavedCaregiverGalleryData() {
+  const profiles = getCareProfiles()
+
   return savedCaregivers.flatMap((saved) => {
     const caregiver = caregivers.find((entry) => entry.id === saved.caregiverId)
-    const profile = careProfiles.find((entry) => entry.id === saved.careProfileId)
+    const profile = profiles.find((entry) => entry.id === saved.careProfileId)
 
     if (!caregiver || !profile) {
       return []
@@ -104,8 +125,41 @@ export function formatDisplayLabel(value: string) {
     .join(" ")
 }
 
-function formatStatus(status: CareProfileStatus) {
-  return status === "ready_for_search" ? "Ready for search" : "Draft profile"
+export function isCareProfileSearchReady(profile: CareProfile) {
+  return (
+    profile.name.trim().length > 0 &&
+    profile.age > 0 &&
+    profile.preferredLanguage.trim().length > 0 &&
+    profile.conditions.length > 0 &&
+    profile.dailyCareTasks.length > 0
+  )
 }
 
 const formatLabel = formatDisplayLabel
+
+function readStoredCareProfiles() {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const rawValue = window.localStorage.getItem(CARE_PROFILES_STORAGE_KEY)
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue)
+    return Array.isArray(parsedValue) ? (parsedValue as CareProfile[]) : null
+  } catch {
+    return null
+  }
+}
+
+function writeStoredCareProfiles(profiles: CareProfile[]) {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  window.localStorage.setItem(CARE_PROFILES_STORAGE_KEY, JSON.stringify(profiles))
+}

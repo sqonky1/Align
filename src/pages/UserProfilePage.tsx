@@ -45,7 +45,7 @@ export function UserProfilePage() {
                 <span className="profile-glyph" aria-hidden="true">
                   {profile.name.charAt(0)}
                 </span>
-                <span className="status-chip">{profile.status}</span>
+                <span className="status-chip">{profile.readinessLabel}</span>
               </div>
 
               <div className="profile-card-copy">
@@ -61,9 +61,14 @@ export function UserProfilePage() {
               </div>
 
               <div className="profile-card-actions">
-                <Link className="inline-action" to={`/search?profile=${profile.id}`}>
-                  Search caregivers
-                </Link>
+                <div className="action-link-row">
+                  <Link className="inline-action" to={`/profiles/${profile.id}/edit`}>
+                    Edit profile
+                  </Link>
+                  <Link className="inline-action" to={`/search?profile=${profile.id}`}>
+                    Search caregivers
+                  </Link>
+                </div>
               </div>
             </article>
           ))}
