@@ -77,9 +77,10 @@ export function SearchPage() {
           <>
             <section className="ranked-featured-list" aria-label="Top ranked caregivers">
               {featuredResults.map((caregiver, index) => (
-                <article
-                  className={`caregiver-card caregiver-card-ranked ${getFeaturedCardClass(index)}`}
+                <Link
+                  className={`caregiver-card caregiver-card-link caregiver-card-ranked ${getFeaturedCardClass(index)}`}
                   key={caregiver.id}
+                  to={getCaregiverDetailHref(caregiver.id, activeProfile?.id)}
                 >
                   <div className="ranked-card-header">
                     <div className="ranked-card-heading">
@@ -121,7 +122,7 @@ export function SearchPage() {
                       </div>
                     </div>
                   </div>
-                </article>
+                </Link>
               ))}
             </section>
 
@@ -136,7 +137,11 @@ export function SearchPage() {
 
                 <div className="gallery-grid" aria-label="More ranked caregivers">
                   {remainingResults.map((caregiver, index) => (
-                    <article className="caregiver-card caregiver-card-compact" key={caregiver.id}>
+                    <Link
+                      className="caregiver-card caregiver-card-link caregiver-card-compact"
+                      key={caregiver.id}
+                      to={getCaregiverDetailHref(caregiver.id, activeProfile?.id)}
+                    >
                       <div className="portrait-block">
                         <div className="portrait-frame">
                           <span>{caregiver.name.charAt(0)}</span>
@@ -161,7 +166,7 @@ export function SearchPage() {
                           ))}
                         </div>
                       </div>
-                    </article>
+                    </Link>
                   ))}
                 </div>
               </section>
@@ -170,7 +175,11 @@ export function SearchPage() {
         ) : (
           <div className="gallery-grid" aria-label="Caregiver search results">
             {remainingResults.map((caregiver) => (
-              <article className="caregiver-card" key={caregiver.id}>
+              <Link
+                className="caregiver-card caregiver-card-link"
+                key={caregiver.id}
+                to={getCaregiverDetailHref(caregiver.id)}
+              >
                 <div className="portrait-block">
                   <div className="portrait-frame">
                     <span>{caregiver.name.charAt(0)}</span>
@@ -194,7 +203,7 @@ export function SearchPage() {
                     ))}
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}
@@ -265,4 +274,8 @@ function getFeaturedCardClass(index: number) {
   }
 
   return "caregiver-card-rank-bronze"
+}
+
+function getCaregiverDetailHref(caregiverId: string, profileId?: string) {
+  return profileId ? `/caregivers/${caregiverId}?profile=${profileId}` : `/caregivers/${caregiverId}`
 }

@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom"
 import { AppShell } from "../components/layout/AppShell"
+import { CaregiverDetailPage } from "../pages/CaregiverDetailPage"
 import { NewCareProfilePage } from "../pages/NewCareProfilePage"
 import { NotFoundPage } from "../pages/NotFoundPage"
 import { SearchPage } from "../pages/SearchPage"
@@ -25,6 +26,10 @@ export const router = createBrowserRouter([
       {
         path: "search",
         element: <SearchPage />,
+      },
+      {
+        path: "caregivers/:caregiverId",
+        element: <CaregiverDetailPage />,
       },
       {
         path: "*",

@@ -42,6 +42,10 @@ export function getCaregivers() {
   return caregivers
 }
 
+export function getCaregiverById(caregiverId: string) {
+  return caregivers.find((caregiver) => caregiver.id === caregiverId) ?? null
+}
+
 export function getSavedCaregiverLinks() {
   return savedCaregivers
 }

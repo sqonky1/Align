@@ -791,6 +791,20 @@ h3 {
     var(--surface);
 }
 
+.caregiver-card-link {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.caregiver-card-link:hover,
+.caregiver-card-link:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: rgba(31, 92, 82, 0.28);
+}
+
 .caregiver-card-copy {
   gap: 12px;
 }
@@ -934,6 +948,143 @@ h3 {
   border-top: 1px solid rgba(216, 208, 194, 0.8);
 }
 
+.detail-stage {
+  display: block;
+}
+
+.detail-backnav {
+  display: flex;
+  align-items: center;
+}
+
+.detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.detail-hero {
+  padding: 22px 24px;
+  gap: 18px;
+}
+
+.detail-hero-header,
+.detail-hero-heading {
+  display: flex;
+}
+
+.detail-hero-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.detail-hero-heading {
+  align-items: center;
+  gap: 14px;
+}
+
+.detail-hero-body {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.detail-portrait .portrait-frame {
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  font-size: 2.3rem;
+}
+
+.detail-status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(31, 92, 82, 0.08);
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+
+.detail-supporting-copy,
+.detail-empty-copy {
+  color: var(--text-muted);
+}
+
+.detail-meta-grid,
+.detail-fit-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.detail-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-fit-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-meta-card,
+.detail-fit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(216, 208, 194, 0.82);
+  border-radius: var(--radius-md);
+  background: rgba(255, 253, 248, 0.72);
+  box-shadow: var(--shadow-soft);
+}
+
+.detail-list,
+.detail-fit-lists {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-fit-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.detail-fit-card h3 {
+  font-size: 1.35rem;
+  line-height: 1.05;
+}
+
+.detail-fit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(216, 208, 194, 0.8);
+}
+
+.detail-fit-list span {
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.detail-fit-card-strong {
+  border-color: rgba(63, 122, 92, 0.24);
+}
+
+.detail-fit-card-partial {
+  border-color: rgba(184, 132, 47, 0.24);
+}
+
+.detail-fit-card-gap {
+  border-color: rgba(184, 92, 75, 0.24);
+}
+
 .caregiver-card-compact .portrait-frame {
   aspect-ratio: 16 / 10;
 }
@@ -994,7 +1145,12 @@ h3 {
   .saved-gallery,
   .editor-stage,
   .field-grid,
-  .signal-grid {
+  .signal-grid,
+  .detail-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-fit-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1021,7 +1177,11 @@ h3 {
 
   .ranked-card-header,
   .ranked-card-heading,
-  .ranked-card-body {
+  .ranked-card-body,
+  .detail-hero-header,
+  .detail-hero-heading,
+  .detail-hero-body,
+  .detail-fit-card-header {
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: flex-start;
