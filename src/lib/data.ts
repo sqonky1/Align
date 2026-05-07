@@ -3,7 +3,11 @@ import { caregivers } from "../data/caregivers"
 import { careProfiles } from "../data/careProfiles"
 import { savedCaregivers } from "../data/savedCaregivers"
 import { getRankedCaregiverMatches } from "./matching"
-import type { CareProfile, SearchCaregiverCard } from "../types"
+import type {
+  CareProfile,
+  SearchCaregiverBreakdownItem,
+  SearchCaregiverCard,
+} from "../types"
 
 const CARE_PROFILES_STORAGE_KEY = "align.careProfiles"
 
@@ -53,7 +57,6 @@ export function getCareProfileCardData() {
       ...profile.conditions.slice(0, 2).map(formatLabel),
       profile.preferredLanguage,
     ],
-    readinessLabel: isCareProfileSearchReady(profile) ? "Search ready" : "Needs details",
   }))
 }
 
@@ -92,6 +95,9 @@ export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCareg
     summary: result.summary,
     traits: result.traits,
     alert: result.alert,
+    breakdown: result.breakdown
+      .filter((item) => item.maxScore > 0)
+      .map((item) => toSearchBreakdownItem(item)),
   }))
 }
 
@@ -108,6 +114,7 @@ export function getBrowseCaregiverGalleryData(): SearchCaregiverCard[] {
       `${caregiver.yearsOfExperience} years`,
     ],
     alert: null,
+    breakdown: [],
   }))
 }
 
@@ -118,17 +125,45 @@ export function formatDisplayLabel(value: string) {
     .join(" ")
 }
 
-export function isCareProfileSearchReady(profile: CareProfile) {
-  return (
-    profile.name.trim().length > 0 &&
-    profile.age > 0 &&
-    profile.preferredLanguage.trim().length > 0 &&
-    profile.conditions.length > 0 &&
-    profile.dailyCareTasks.length > 0
-  )
-}
-
 const formatLabel = formatDisplayLabel
+
+function toSearchBreakdownItem(item: {
+  key: string
+  label: string
+  score: number
+  maxScore: number
+  matchedValues: string[]
+  missingValues: string[]
+}): SearchCaregiverBreakdownItem {
+  const scorePercent = item.maxScore > 0 ? Math.round((item.score / item.maxScore) * 100) : 0
+
+  if (item.key === "language") {
+    return {
+      key: item.key,
+      label: item.label,
+      scorePercent,
+      summary: item.matchedValues[0] ?? `Missing ${item.missingValues[0] ?? "language"}`,
+    }
+  }
+
+  if (item.key === "experience") {
+    return {
+      key: item.key,
+      label: item.label,
+      scorePercent,
+      summary: item.matchedValues[0] ?? "Experience not available",
+    }
+  }
+
+  const requestedCount = item.matchedValues.length + item.missingValues.length
+
+  return {
+    key: item.key,
+    label: item.label,
+    scorePercent,
+    summary: `${item.matchedValues.length}/${requestedCount}`,
+  }
+}
 
 function readStoredCareProfiles() {
   if (typeof window === "undefined") {

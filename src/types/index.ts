@@ -63,6 +63,13 @@ export type SavedCaregiver = {
   savedAt: string
 }
 
+export type SearchCaregiverBreakdownItem = {
+  key: string
+  label: string
+  scorePercent: number
+  summary: string
+}
+
 export type SearchCaregiverCard = {
   id: string
   name: string
@@ -71,4 +78,5 @@ export type SearchCaregiverCard = {
   traits: string[]
   matchPercent: number | null
   alert: string | null
+  breakdown: SearchCaregiverBreakdownItem[]
 }

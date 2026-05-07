@@ -382,7 +382,6 @@ h3 {
   color: var(--text-muted);
 }
 
-.status-chip,
 .score-token {
   display: inline-flex;
   align-items: center;
@@ -391,11 +390,6 @@ h3 {
   border-radius: 999px;
   font-size: 0.9rem;
   font-weight: 700;
-}
-
-.status-chip {
-  color: var(--primary-strong);
-  background: rgba(31, 92, 82, 0.1);
 }
 
 .inline-action {
@@ -805,9 +799,164 @@ h3 {
   gap: 10px;
 }
 
+.ranked-featured-list {
+  display: grid;
+  gap: 16px;
+}
+
+.caregiver-card-ranked {
+  padding: 18px;
+  gap: 14px;
+}
+
+.caregiver-card-rank-gold {
+  border-color: rgba(201, 139, 46, 0.4);
+  background:
+    linear-gradient(180deg, rgba(255, 249, 235, 0.98), rgba(246, 232, 196, 0.52)),
+    var(--surface);
+}
+
+.caregiver-card-rank-silver {
+  border-color: rgba(130, 146, 150, 0.34);
+  background:
+    linear-gradient(180deg, rgba(252, 252, 250, 0.98), rgba(226, 232, 232, 0.5)),
+    var(--surface);
+}
+
+.caregiver-card-rank-bronze {
+  border-color: rgba(169, 112, 74, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 243, 0.98), rgba(235, 214, 199, 0.48)),
+    var(--surface);
+}
+
+.ranked-card-header,
+.ranked-card-heading,
+.ranked-card-portrait {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranked-card-header {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.ranked-card-heading {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+
+.rank-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: rgba(31, 92, 82, 0.12);
+  color: var(--primary-strong);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.caregiver-card-rank-gold .rank-token {
+  background: rgba(201, 139, 46, 0.18);
+  color: #9a6514;
+}
+
+.caregiver-card-rank-silver .rank-token {
+  background: rgba(130, 146, 150, 0.16);
+  color: #5e6d72;
+}
+
+.caregiver-card-rank-bronze .rank-token {
+  background: rgba(169, 112, 74, 0.16);
+  color: #8f5734;
+}
+
+.ranked-card-body {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.ranked-card-portrait {
+  gap: 10px;
+}
+
+.ranked-card-portrait .portrait-frame {
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  font-size: 1.8rem;
+}
+
+.breakdown-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.breakdown-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.breakdown-chip-strong {
+  background: rgba(63, 122, 92, 0.14);
+  color: var(--success);
+}
+
+.breakdown-chip-partial {
+  background: rgba(184, 132, 47, 0.16);
+  color: var(--warning);
+}
+
+.breakdown-chip-gap {
+  background: rgba(184, 92, 75, 0.14);
+  color: var(--danger);
+}
+
 .fit-alert {
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid rgba(216, 208, 194, 0.8);
+}
+
+.caregiver-card-compact .portrait-frame {
+  aspect-ratio: 16 / 10;
+}
+
+.caregiver-card-compact .caregiver-card-copy {
+  gap: 10px;
+}
+
+.score-weight-list {
+  display: grid;
+  gap: 10px;
+}
+
+.score-weight-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(216, 208, 194, 0.8);
+}
+
+.score-weight-row strong {
+  color: var(--primary-strong);
 }
 
 .signal-grid {
@@ -870,6 +1019,14 @@ h3 {
     align-items: flex-start;
   }
 
+  .ranked-card-header,
+  .ranked-card-heading,
+  .ranked-card-body {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .toolbar-actions {
     justify-content: flex-start;
   }
@@ -888,6 +1045,10 @@ h3 {
 @media (max-width: 1200px) {
   .gallery-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ranked-card-body {
+    grid-template-columns: 120px minmax(0, 1fr);
   }
 }
 

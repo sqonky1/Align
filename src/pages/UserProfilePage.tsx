@@ -45,7 +45,6 @@ export function UserProfilePage() {
                 <span className="profile-glyph" aria-hidden="true">
                   {profile.name.charAt(0)}
                 </span>
-                <span className="status-chip">{profile.readinessLabel}</span>
               </div>
 
               <div className="profile-card-copy">
