@@ -1680,12 +1680,77 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+.detail-core-stat-wide {
+  grid-column: 1 / -1;
+}
+
 .detail-meta-master .trait-chip {
   min-height: 32px;
   padding: 0 12px;
   background: rgba(102, 145, 126, 0.12);
   color: #2e5b4f;
   font-size: 0.88rem;
+}
+
+.detail-meta-master-ledger {
+  --meta-divider: rgba(216, 208, 194, 0.6);
+  border: 1px solid rgba(216, 208, 194, 0.85);
+  border-radius: 18px;
+  background: #fcfaf7;
+  box-shadow: none;
+}
+
+.detail-meta-master-ledger .detail-meta-tile {
+  gap: 10px;
+  padding: 1.05rem 1.2rem 1.15rem;
+}
+
+.detail-meta-master-ledger .detail-meta-tile:nth-child(even) {
+  border-left: 1px solid var(--meta-divider);
+}
+
+.detail-meta-master-ledger .detail-meta-tile:nth-child(n + 3) {
+  border-top: 1px solid var(--meta-divider);
+}
+
+.detail-meta-master-ledger .detail-meta-heading-row .panel-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+}
+
+.detail-meta-inline-count {
+  color: #7a6c56;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-core-kv {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+
+.detail-core-kv .signal-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.detail-core-kv .signal-row span::after {
+  content: " :";
+  color: rgba(31, 42, 42, 0.55);
+}
+
+.detail-meta-master-ledger .trait-chip {
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.detail-meta-master-ledger .detail-empty-copy {
+  font-size: 0.92rem;
 }
 
 .detail-fit-grid {
@@ -1881,12 +1946,49 @@ h3 {
   border-top: 1px solid rgba(216, 208, 194, 0.8);
 }
 
-.detail-fit-list span {
+.detail-fit-list:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.detail-fit-list > span {
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--primary);
+}
+
+.detail-fit-rows {
+  display: grid;
+  gap: 6px;
+}
+
+.detail-fit-row {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.detail-fit-pill {
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.detail-fit-pill-icon {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.detail-fit-pill-match {
+  background: rgba(31, 92, 82, 0.08);
+  border: 1px solid transparent;
+}
+
+.detail-fit-pill-gap {
+  background: rgba(184, 132, 47, 0.06);
+  border: 1px dashed rgba(184, 132, 47, 0.45);
+  color: #8b6221;
 }
 
 .detail-fit-card-strong {

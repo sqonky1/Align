@@ -18,6 +18,14 @@ import {
 } from "../lib/matching"
 import { buildCaregiverSnapshotPills } from "../lib/caregiverPills"
 import { getRankAccentClass } from "../lib/rankAccents"
+import type { CareProfile } from "../types"
+
+type DetailListGroup = {
+  label: string
+  values: string[]
+  emptyLabel: string
+  tone?: "match" | "gap"
+}
 
 export function CaregiverDetailPage() {
   const { caregiverId } = useParams()
@@ -326,24 +334,37 @@ export function CaregiverDetailPage() {
                       <div className="detail-fit-card-header">
                         <div>
                           <p className="panel-label">{item.label}</p>
-                          <h3>{getDetailFitHeading(item)}</h3>
                         </div>
                         <span className={`breakdown-chip ${getBreakdownStatusClass(item)}`}>
-                          {Math.round((item.score / item.maxScore) * 100)}%
+                          {getCoverageRatioCopy(item)}
                         </span>
                       </div>
 
-                      <p className="detail-supporting-copy">{getDetailFitSummary(item)}</p>
-
                       <div className="detail-fit-lists">
-                        {getDetailListGroups(item).map((group) => (
-                          <div className="detail-fit-list" key={group.label}>
-                            <span>{group.label}</span>
-                            {group.values.length > 0 ? (
+                        {getDetailListGroups(item, activeProfile).map((group, index) => (
+                          <div className="detail-fit-list" key={`${item.key}-${index}`}>
+                            {group.label ? <span>{group.label}</span> : null}
+                            {item.key === "experience" ? (
+                              <div className="detail-fit-rows">
+                                {group.values.map((value) => (
+                                  <p className="detail-fit-row" key={value}>
+                                    {value}
+                                  </p>
+                                ))}
+                              </div>
+                            ) : group.values.length > 0 ? (
                               <div className="trait-chips">
                                 {group.values.map((value) => (
-                                  <span className="trait-chip" key={value}>
-                                    {value}
+                                  <span
+                                    className={`trait-chip detail-fit-pill ${
+                                      group.tone === "gap" ? "detail-fit-pill-gap" : "detail-fit-pill-match"
+                                    }`}
+                                    key={value}
+                                  >
+                                    <span aria-hidden="true" className="detail-fit-pill-icon">
+                                      {group.tone === "gap" ? "+" : "✓"}
+                                    </span>
+                                    {toSentenceCase(value)}
                                   </span>
                                 ))}
                               </div>
@@ -567,85 +588,135 @@ function getBreakdownChipCopy(
   return `${item.matchedValues.length}/${requestedCount}`
 }
 
-function getDetailFitHeading(item: MatchDimensionResult) {
-  if (item.key === "language") {
-    return item.matchedValues.length > 0 ? "Communication fit is covered" : "Language mismatch"
-  }
-
+function getCoverageRatioCopy(item: MatchDimensionResult) {
   if (item.key === "experience") {
-    return item.missingValues.length === 0 ? "Experience level is on target" : "Experience is lighter"
+    return item.missingValues.length === 0 ? "1/1" : "0/1"
   }
 
-  if (item.matchedValues.length === 0) {
-    return "No requested coverage"
-  }
-
-  if (item.missingValues.length === 0) {
-    return "Fully covered"
-  }
-
-  return "Partially covered"
+  const requestedCount = item.matchedValues.length + item.missingValues.length
+  return `${item.matchedValues.length}/${requestedCount}`
 }
 
-function getDetailFitSummary(item: MatchDimensionResult) {
+function getDetailListGroups(item: MatchDimensionResult, profile: CareProfile): DetailListGroup[] {
+  const matchedValues = uniqueValues(item.matchedValues)
+  const missingValues = uniqueValues(item.missingValues)
+
   if (item.key === "language") {
-    return item.matchedValues.length > 0
-      ? `Preferred language supported: ${item.matchedValues[0]}.`
-      : `Preferred language not covered: ${item.missingValues[0] ?? "not set"}.`
-  }
-
-  if (item.key === "experience") {
-    return item.missingValues.length === 0
-      ? `Experience level meets the current care brief.`
-      : `Experience is below the target inferred from the care brief complexity.`
-  }
-
-  return item.missingValues.length === 0
-    ? `All requested ${item.label.toLowerCase()} are covered.`
-    : `${item.matchedValues.length} covered, ${item.missingValues.length} still missing.`
-}
-
-function getDetailListGroups(item: MatchDimensionResult) {
-  if (item.key === "language") {
+    const showMissingGroup = !isFullCoverage(item) && missingValues.length > 0
     return [
-      {
-        label: "Covered",
-        values: item.matchedValues,
-        emptyLabel: "No matching language",
-      },
-      {
-        label: "Missing",
-        values: item.missingValues,
-        emptyLabel: "No language gap",
-      },
+      ...(matchedValues.length > 0
+        ? [
+            {
+              label: "",
+              values: matchedValues,
+              emptyLabel: "",
+              tone: "match" as const,
+            },
+          ]
+        : []),
+      ...(showMissingGroup
+        ? [
+            {
+              label: "",
+              values: missingValues,
+              emptyLabel: "",
+              tone: "gap" as const,
+            },
+          ]
+        : []),
     ]
   }
 
   if (item.key === "experience") {
+    const targetYears = getTargetExperienceYearsForProfile(profile)
     return [
       {
-        label: "Caregiver level",
-        values: item.matchedValues,
+        label: "",
+        values: [`Current: ${item.matchedValues[0] ?? "Not listed"}`],
         emptyLabel: "Experience not listed",
       },
       {
-        label: "Profile target",
-        values: item.missingValues,
-        emptyLabel: "Target already met",
+        label: "",
+        values: [`Min: ${targetYears} years`],
+        emptyLabel: "",
       },
     ]
   }
 
+  const showMissingGroup = !isFullCoverage(item) && missingValues.length > 0
   return [
-    {
-      label: "Covered",
-      values: item.matchedValues.map(formatDisplayLabel),
-      emptyLabel: `No ${item.label.toLowerCase()} matched`,
-    },
-    {
-      label: "Still needed",
-      values: item.missingValues.map(formatDisplayLabel),
-      emptyLabel: "No open gaps",
-    },
+    ...(matchedValues.length > 0
+      ? [
+          {
+            label: "",
+            values: matchedValues.map(formatDisplayLabel),
+            emptyLabel: "",
+            tone: "match" as const,
+          },
+        ]
+      : []),
+    ...(showMissingGroup
+      ? [
+          {
+            label: "",
+            values: missingValues.map(formatDisplayLabel),
+            emptyLabel: "",
+            tone: "gap" as const,
+          },
+        ]
+      : []),
   ]
+}
+
+function isFullCoverage(item: MatchDimensionResult) {
+  return item.maxScore > 0 && item.score === item.maxScore
+}
+
+function getTargetExperienceYearsForProfile(profile: CareProfile) {
+  const complexMobilitySkills = new Set([
+    "transfer_support",
+    "wheelchair_support",
+    "bedbound_support",
+  ])
+  const needsCount =
+    profile.conditions.length +
+    profile.dailyCareTasks.length +
+    profile.mobilitySupport.length +
+    profile.medicationSupport.length
+  const hasComplexMobilityNeed = profile.mobilitySupport.some((value) =>
+    complexMobilitySkills.has(value),
+  )
+
+  let targetYears = 2
+
+  if (needsCount >= 4) {
+    targetYears += 1
+  }
+
+  if (needsCount >= 7) {
+    targetYears += 1
+  }
+
+  if (profile.conditions.length >= 2) {
+    targetYears += 1
+  }
+
+  if (hasComplexMobilityNeed || profile.medicationSupport.length >= 2) {
+    targetYears += 1
+  }
+
+  return Math.min(targetYears, 6)
+}
+
+function uniqueValues(values: string[]) {
+  return Array.from(new Set(values))
+}
+
+function toSentenceCase(value: string) {
+  const normalized = value.trim().toLowerCase()
+  if (!normalized) {
+    return ""
+  }
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
 }

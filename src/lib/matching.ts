@@ -443,4 +443,7 @@ function formatLanguageDisplayLabel(value: string) {
   }
 
   return value
+    .split(" ")
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1).toLowerCase())
+    .join(" ")
 }

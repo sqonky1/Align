@@ -32,33 +32,42 @@ export function CareProfileDetailPage() {
   const overviewSections = [
     {
       title: "Conditions",
+      icon: "conditions" as const,
       values: profile.conditions.map(formatDisplayLabel),
       emptyLabel: "No conditions added",
-      count: profile.conditions.length,
     },
     {
       title: "Daily care tasks",
+      icon: "tasks" as const,
       values: profile.dailyCareTasks.map(formatDisplayLabel),
       emptyLabel: "No daily care tasks added",
-      count: profile.dailyCareTasks.length,
     },
     {
       title: "Mobility support",
+      icon: "mobility" as const,
       values: profile.mobilitySupport.map(formatDisplayLabel),
       emptyLabel: "No mobility needs added",
-      count: profile.mobilitySupport.length,
     },
     {
       title: "Medication support",
+      icon: "medication" as const,
       values: profile.medicationSupport.map(formatDisplayLabel),
       emptyLabel: "No medication support added",
-      count: profile.medicationSupport.length,
     },
     {
       title: "Household context",
+      icon: "household" as const,
       values: profile.householdContext.map(formatDisplayLabel),
       emptyLabel: "No household context added",
-      count: profile.householdContext.length,
+    },
+  ]
+  const coreProfileStats = [
+    { label: "Age", value: String(profile.age) },
+    { label: "Gender", value: formatDisplayLabel(profile.gender) },
+    {
+      label: "Preferred language",
+      value: profile.preferredLanguage,
+      className: "detail-core-stat-wide",
     },
   ]
 
@@ -91,34 +100,38 @@ export function CareProfileDetailPage() {
             <div className="section-header section-header-tight">
               <div>
                 <p className="panel-label">Care brief</p>
-                <h2>Structured needs overview</h2>
+                <h2>Structured Needs Overview</h2>
               </div>
             </div>
 
-            <div className="detail-meta-grid" aria-label="Care recipient overview">
-              <article className="detail-meta-card">
-                <p className="panel-label">Core profile</p>
-                <div className="detail-list">
-                  <div className="signal-row">
-                    <span>Age</span>
-                    <strong>{profile.age}</strong>
+            <div className="detail-meta-master" aria-label="Care recipient overview">
+              <article className="detail-meta-tile detail-meta-tile-core">
+                <div className="detail-meta-section-header">
+                  <div className="detail-meta-heading-row">
+                    <SectionIcon type="profile" />
+                    <p className="panel-label">Core profile</p>
                   </div>
-                  <div className="signal-row">
-                    <span>Gender</span>
-                    <strong>{formatDisplayLabel(profile.gender)}</strong>
-                  </div>
-                  <div className="signal-row">
-                    <span>Preferred language</span>
-                    <strong>{profile.preferredLanguage}</strong>
-                  </div>
+                </div>
+                <div className="detail-core-stat-grid" aria-label="Core profile data">
+                  {coreProfileStats.map((item) => (
+                    <div
+                      className={`detail-core-stat ${item.className ?? ""}`.trim()}
+                      key={item.label}
+                    >
+                      <span>{item.label}</span>
+                      <strong>{item.value}</strong>
+                    </div>
+                  ))}
                 </div>
               </article>
 
               {overviewSections.map((section) => (
-                <article className="detail-meta-card" key={section.title}>
-                  <div className="detail-meta-card-header">
-                    <p className="panel-label">{section.title}</p>
-                    <strong className="detail-meta-card-count">{section.count}</strong>
+                <article className="detail-meta-tile" key={section.title}>
+                  <div className="detail-meta-section-header">
+                    <div className="detail-meta-heading-row">
+                      <SectionIcon type={section.icon} />
+                      <p className="panel-label">{section.title}</p>
+                    </div>
                   </div>
                   {section.values.length > 0 ? (
                     <div className="trait-chips">
@@ -225,5 +238,57 @@ export function CareProfileDetailPage() {
         </div>
       </section>
     </section>
+  )
+}
+
+function SectionIcon({
+  type,
+}: {
+  type: "profile" | "conditions" | "tasks" | "mobility" | "medication" | "household"
+}) {
+  if (type === "conditions") {
+    return (
+      <svg aria-hidden="true" className="detail-meta-icon" viewBox="0 0 24 24">
+        <path d="M12 21s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 11c0 5.6-7 10-7 10z" />
+      </svg>
+    )
+  }
+
+  if (type === "tasks") {
+    return (
+      <svg aria-hidden="true" className="detail-meta-icon" viewBox="0 0 24 24">
+        <path d="M9 12l2 2 4-4M7 4h10l3 3v13H4V4h3z" />
+      </svg>
+    )
+  }
+
+  if (type === "mobility") {
+    return (
+      <svg aria-hidden="true" className="detail-meta-icon" viewBox="0 0 24 24">
+        <path d="M13 6a2 2 0 11-4 0 2 2 0 014 0zM10 9l3 2v3l3 3M10 11l-2 4-3 2m5-3h4" />
+      </svg>
+    )
+  }
+
+  if (type === "medication") {
+    return (
+      <svg aria-hidden="true" className="detail-meta-icon" viewBox="0 0 24 24">
+        <path d="M8 4h8v6H8zM12 10v10m-4-6h8" />
+      </svg>
+    )
+  }
+
+  if (type === "household") {
+    return (
+      <svg aria-hidden="true" className="detail-meta-icon" viewBox="0 0 24 24">
+        <path d="M4 11l8-6 8 6M7 10v8h10v-8M10 18v-4h4v4" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg aria-hidden="true" className="detail-meta-icon" viewBox="0 0 24 24">
+      <path d="M12 3l8 4v5c0 4.9-3.2 8.3-8 9.8-4.8-1.5-8-4.9-8-9.8V7l8-4zm0 5v8m-4-4h8" />
+    </svg>
   )
 }
