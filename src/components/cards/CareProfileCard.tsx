@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { formatDisplayLabel } from "../../lib/data"
+import { getMatchSearchHref } from "../../lib/matchNavigation"
 import type { CareProfileWorkspaceCard } from "../../types"
 
 type CareProfileCardProps = {
@@ -9,7 +10,9 @@ type CareProfileCardProps = {
   onDelete?: (() => void) | undefined
   showActions?: boolean
   className?: string
-  variant?: "default" | "anchor" | "picker"
+  variant?: "default" | "anchor"
+  contextLabel?: string
+  interactive?: boolean
 }
 
 export function CareProfileCard({
@@ -20,33 +23,46 @@ export function CareProfileCard({
   showActions = true,
   className,
   variant = "default",
+  contextLabel,
+  interactive = true,
 }: CareProfileCardProps) {
+  const resolvedContextLabel = contextLabel ?? "Matching for profile"
+
   const cardClassName = [
     "profile-card",
-    "profile-card-clickable",
+    interactive ? "profile-card-clickable" : null,
+    onSelect ? "profile-card-selectable" : null,
     variant === "anchor" ? "profile-card-anchor" : null,
-    variant === "picker" ? "profile-card-picker" : null,
     className,
   ]
     .filter(Boolean)
     .join(" ")
 
   return (
-    <article className={cardClassName}>
-      {onSelect ? (
-        <button
-          aria-label={`Select ${profile.name}`}
-          className="profile-card-overlay-button"
-          onClick={onSelect}
-          type="button"
-        />
-      ) : (
+    <article
+      aria-label={onSelect ? `Select ${profile.name}` : undefined}
+      className={cardClassName}
+      onClick={onSelect}
+      onKeyDown={
+        onSelect
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault()
+                onSelect()
+              }
+            }
+          : undefined
+      }
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+    >
+      {interactive && !onSelect ? (
         <Link
-          aria-label={`Open ${profile.name} care profile`}
+          aria-label={`Open ${profile.name} care recipient details`}
           className="profile-card-overlay"
           to={href}
         />
-      )}
+      ) : null}
 
       <div className="profile-card-top">
         <span className="profile-glyph" aria-hidden="true">
@@ -54,7 +70,7 @@ export function CareProfileCard({
         </span>
 
         {showActions ? (
-          <Link className="profile-card-action profile-card-action-match" to={`/search?profile=${profile.id}`}>
+          <Link className="profile-card-action profile-card-action-match" to={getMatchSearchHref(profile.id)}>
             <SearchIcon />
             <span>Find a match</span>
           </Link>
@@ -62,9 +78,7 @@ export function CareProfileCard({
       </div>
 
       <div className="profile-card-copy">
-        {variant === "anchor" ? (
-          <p className="profile-card-context-label">Matching for profile</p>
-        ) : null}
+        <p className="profile-card-context-label">{resolvedContextLabel}</p>
         <h3>{profile.name}</h3>
         <p>
           {profile.age} years old · {formatDisplayLabel(profile.gender)} ·{" "}

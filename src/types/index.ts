@@ -63,6 +63,15 @@ export type SavedCaregiver = {
   savedAt: string
 }
 
+export type AgencyHandoffRequest = {
+  id: string
+  careProfileId: string
+  agencyId: string
+  caregiverIds: string[]
+  note: string
+  submittedAt: string
+}
+
 export type SearchCaregiverBreakdownItem = {
   key: string
   label: string

@@ -1,10 +1,14 @@
+import { useEffect, useState } from "react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { PageHeader } from "../components/layout/PageHeader"
+import { CareProfileCard } from "../components/cards/CareProfileCard"
 import {
   formatDisplayLabel,
   getCaregiverById,
   getCaregivers,
   getCareProfileById,
+  isCaregiverSavedForProfile,
+  removeSavedCaregiverForProfile,
+  saveCaregiverForProfile,
 } from "../lib/data"
 import {
   getCaregiverLanguageDisplay,
@@ -34,7 +38,35 @@ export function CaregiverDetailPage() {
   const isMatchedMode = Boolean(caregiver && activeProfile && matchResult)
   const activeRankClass =
     matchRank && matchRank <= 3 ? getFeaturedCardClass(matchRank - 1) : undefined
-  const activeProfileName = activeProfile?.name ?? "the active care profile"
+  const [savedFlag, setSavedFlag] = useState(
+    caregiver && activeProfileId
+      ? isCaregiverSavedForProfile(activeProfileId, caregiver.id)
+      : false,
+  )
+
+  useEffect(() => {
+    if (!caregiver || !activeProfileId) {
+      setSavedFlag(false)
+      return
+    }
+
+    setSavedFlag(isCaregiverSavedForProfile(activeProfileId, caregiver.id))
+  }, [activeProfileId, caregiver])
+
+  function handleToggleSave() {
+    if (!caregiver || !activeProfileId) {
+      return
+    }
+
+    if (savedFlag) {
+      removeSavedCaregiverForProfile(activeProfileId, caregiver.id)
+      setSavedFlag(false)
+      return
+    }
+
+    saveCaregiverForProfile(activeProfileId, caregiver.id)
+    setSavedFlag(true)
+  }
 
   if (!caregiver) {
     return (
@@ -91,52 +123,30 @@ export function CaregiverDetailPage() {
         </button>
       </div>
 
-      <PageHeader
-        eyebrow="Caregiver detail"
-        title={
-          isMatchedMode
-            ? `Review ${caregiver.name} against ${activeProfileName}.`
-            : `Review ${caregiver.name} in browse mode.`
-        }
-        description={
-          isMatchedMode
-            ? "This page expands the ranked preview into a fuller caregiver profile with an explainable fit breakdown tied to the active care brief."
-            : "Browse mode stays neutral here too: the page focuses on the caregiver's profile, support areas, and experience without inventing a match score."
-        }
-      />
-
       <section className="detail-stage">
         <div className="detail-main">
+          {isMatchedMode && activeProfile ? (
+            <CareProfileCard
+              className="detail-profile-context-card"
+              contextLabel="Reviewing for"
+              href={`/profiles/${activeProfile.id}`}
+              profile={{
+                id: activeProfile.id,
+                name: activeProfile.name,
+                age: activeProfile.age,
+                gender: activeProfile.gender,
+                preferredLanguage: activeProfile.preferredLanguage,
+              }}
+              showActions={false}
+              variant="anchor"
+            />
+          ) : null}
+
           <section
             className={`caregiver-card caregiver-card-ranked detail-hero ${
               activeRankClass ?? ""
             }`.trim()}
           >
-            <div className="detail-hero-header">
-              <div className="detail-hero-heading">
-                {isMatchedMode && matchRank ? (
-                  <span className="rank-token">#{matchRank}</span>
-                ) : (
-                  <span className="profile-glyph">{caregiver.name.charAt(0)}</span>
-                )}
-                <div>
-                  <p className="panel-label">
-                    {isMatchedMode ? "Matched caregiver" : "Caregiver profile"}
-                  </p>
-                  <h2>{caregiver.name}</h2>
-                  <p className="agency-line">{caregiver.agencyName}</p>
-                </div>
-              </div>
-
-              {isMatchedMode && matchResult ? (
-                <span className="score-token">{matchResult.matchPercent}% match</span>
-              ) : (
-                <span className="detail-status-chip">
-                  {caregiver.availability === "available" ? "Available now" : "Shortlist only"}
-                </span>
-              )}
-            </div>
-
             <div className="detail-hero-body">
               <div className="detail-portrait">
                 <div className="portrait-frame">
@@ -144,7 +154,44 @@ export function CaregiverDetailPage() {
                 </div>
               </div>
 
-              <div className="caregiver-card-copy">
+              <div className="caregiver-card-copy detail-hero-content">
+                <div className="detail-hero-header">
+                  <div className="detail-hero-heading">
+                    {!isMatchedMode ? (
+                      <span className="profile-glyph">{caregiver.name.charAt(0)}</span>
+                    ) : null}
+                    <div>
+                      <p className="panel-label">
+                        {isMatchedMode ? "Matched caregiver" : "Caregiver profile"}
+                      </p>
+                      <div className="detail-hero-name-row">
+                        <h2>{caregiver.name}</h2>
+                        {isMatchedMode && matchRank ? (
+                          <span className="rank-token detail-hero-rank-token">#{matchRank}</span>
+                        ) : null}
+                      </div>
+                      <p className="agency-line">{caregiver.agencyName}</p>
+                    </div>
+                  </div>
+
+                  {isMatchedMode && matchResult ? (
+                    <div className="detail-hero-actions">
+                      <span className="score-token">{matchResult.matchPercent}% match</span>
+                      <button
+                        className={`button-secondary shortlist-toggle ${savedFlag ? "shortlist-toggle-active" : ""}`}
+                        onClick={handleToggleSave}
+                        type="button"
+                      >
+                        {savedFlag ? "Saved to shortlist" : "Save to shortlist"}
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="detail-status-chip">
+                      {caregiver.availability === "available" ? "Available now" : "Shortlist only"}
+                    </span>
+                  )}
+                </div>
+
                 <p className="result-summary">{caregiver.bio}</p>
 
                 {isMatchedMode && matchResult ? (

@@ -2,6 +2,8 @@
 
 Align is a hackathon MVP for senior care matching within a broader FDW support ecosystem.
 
+**Core problem statement**: How might we enable and empower caregivers who are caring for seniors or PWDs so that they can alleviate caregiver fatigue and burnout?
+
 The product helps employers structure a senior's care needs, compare those needs against a caregiver pool, and reduce caregiver burnout and fatigue caused by skills-care mismatch. While employers and helpers both benefit from better matching, the deeper problem Align is addressing is the pressure placed on foreign domestic workers when care demands exceed their training, language ability, or lived experience. Search is for recommendation and discovery, and employers can be referred through the website to a partner agency for hiring and placement.
 
 ## Product Scope
@@ -41,7 +43,6 @@ The product helps employers structure a senior's care needs, compare those needs
 
 ### 4. Caregiver Detail Page
 
-- Planned next
 - Top 3 matched search cards are already designed as a preview of this direction
 
 ## Matching Model

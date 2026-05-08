@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { CaregiverCard } from "../components/cards/CaregiverCard"
 import { CareProfileCard } from "../components/cards/CareProfileCard"
@@ -8,16 +8,29 @@ import {
   getCareProfileCardData,
   getCareProfileById,
   getRankedCaregiverGalleryData,
+  isCaregiverSavedForProfile,
+  removeSavedCaregiverForProfile,
+  saveCaregiverForProfile,
 } from "../lib/data"
+import {
+  getMatchLoadingDurationMs,
+  getMatchSearchHref,
+  MATCH_LOADING_PARAM_KEY,
+  MATCH_LOADING_PARAM_VALUE,
+} from "../lib/matchNavigation"
 import type { SearchCaregiverBreakdownItem } from "../types"
 
 export function SearchPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const [isMatchLoading, setIsMatchLoading] = useState(false)
+  const matchLoadingTimeoutRef = useRef<number | null>(null)
   const activeProfileId = searchParams.get("profile")
+  const matchLoadingParam = searchParams.get(MATCH_LOADING_PARAM_KEY)
   const activeProfile = activeProfileId ? getCareProfileById(activeProfileId) : null
   const isMatchedMode = Boolean(activeProfile)
+  const [savedIds, setSavedIds] = useState<string[]>([])
   const careProfiles = getCareProfileCardData()
   const searchResults = activeProfile
     ? getRankedCaregiverGalleryData(activeProfile)
@@ -25,9 +38,76 @@ export function SearchPage() {
   const featuredResults = isMatchedMode ? searchResults.slice(0, 3) : []
   const remainingResults = isMatchedMode ? searchResults.slice(3) : searchResults
 
+  useEffect(() => {
+    if (!activeProfileId) {
+      setSavedIds([])
+      return
+    }
+
+    const profile = getCareProfileById(activeProfileId)
+
+    if (!profile) {
+      setSavedIds([])
+      return
+    }
+
+    setSavedIds(
+      getRankedCaregiverGalleryData(profile)
+        .filter((caregiver) => isCaregiverSavedForProfile(activeProfileId, caregiver.id))
+        .map((caregiver) => caregiver.id),
+    )
+  }, [activeProfileId])
+
+  useEffect(() => {
+    if (!activeProfileId || matchLoadingParam !== MATCH_LOADING_PARAM_VALUE) {
+      return
+    }
+
+    if (matchLoadingTimeoutRef.current !== null) {
+      window.clearTimeout(matchLoadingTimeoutRef.current)
+    }
+
+    setIsMatchLoading(true)
+    matchLoadingTimeoutRef.current = window.setTimeout(() => {
+      const params = new URLSearchParams({ profile: activeProfileId })
+      navigate(`/search?${params.toString()}`, { replace: true })
+      setIsMatchLoading(false)
+      matchLoadingTimeoutRef.current = null
+    }, getMatchLoadingDurationMs())
+  }, [activeProfileId, matchLoadingParam, navigate])
+
+  useEffect(() => {
+    return () => {
+      if (matchLoadingTimeoutRef.current !== null) {
+        window.clearTimeout(matchLoadingTimeoutRef.current)
+      }
+    }
+  }, [])
+
   function handleProfileSelect(profileId: string) {
     setIsPickerOpen(false)
-    navigate(`/search?profile=${profileId}`)
+    navigate(getMatchSearchHref(profileId))
+  }
+
+  function handleFeaturedCardSelect(caregiverId: string) {
+    navigate(getCaregiverDetailHref(caregiverId, activeProfile?.id))
+  }
+
+  function handleToggleSave(caregiverId: string) {
+    if (!activeProfileId) {
+      return
+    }
+
+    const isSaved = savedIds.includes(caregiverId)
+
+    if (isSaved) {
+      removeSavedCaregiverForProfile(activeProfileId, caregiverId)
+      setSavedIds((current) => current.filter((id) => id !== caregiverId))
+      return
+    }
+
+    saveCaregiverForProfile(activeProfileId, caregiverId)
+    setSavedIds((current) => [...current, caregiverId])
   }
 
   return (
@@ -42,6 +122,12 @@ export function SearchPage() {
               <div className="search-results-meta">
                 <p className="panel-label">Results</p>
                 <p className="toolbar-caption">{searchResults.length} caregivers ranked by structured fit</p>
+                <p className="toolbar-caption">
+                  {savedIds.length} shortlisted for {activeProfile.name}.{" "}
+                  <Link className="inline-action" to={`/profiles/${activeProfile.id}`}>
+                    Review shortlist
+                  </Link>
+                </p>
               </div>
             </section>
           ) : (
@@ -57,14 +143,45 @@ export function SearchPage() {
             </div>
           )}
 
-          {isMatchedMode ? (
+          {isMatchLoading ? (
+            <section className="match-loading-stage" aria-live="polite" aria-busy="true">
+              <div className="section-header section-header-tight">
+                <h2>Finding caregiver matches...</h2>
+                <p className="toolbar-caption">Ranking profiles based on selected care needs.</p>
+              </div>
+
+              <div className="match-loading-grid" aria-hidden="true">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <article className="caregiver-card caregiver-card-skeleton" key={`skeleton-${index}`}>
+                    <div className="skeleton-line skeleton-line-heading" />
+                    <div className="skeleton-line skeleton-line-subheading" />
+                    <div className="skeleton-block" />
+                    <div className="skeleton-chip-row">
+                      <span className="skeleton-chip" />
+                      <span className="skeleton-chip" />
+                      <span className="skeleton-chip" />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : isMatchedMode ? (
             <>
               <section className="ranked-featured-list" aria-label="Top ranked caregivers">
                 {featuredResults.map((caregiver, index) => (
-                  <Link
-                    className={`caregiver-card caregiver-card-link caregiver-card-ranked ${getFeaturedCardClass(index)}`}
+                  <article
+                    aria-label={`Open ${caregiver.name} profile`}
+                    className={`caregiver-card caregiver-card-ranked ${getFeaturedCardClass(index)}`}
                     key={caregiver.id}
-                    to={getCaregiverDetailHref(caregiver.id, activeProfile?.id)}
+                    onClick={() => handleFeaturedCardSelect(caregiver.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault()
+                        handleFeaturedCardSelect(caregiver.id)
+                      }
+                    }}
+                    role="link"
+                    tabIndex={0}
                   >
                     <div className="ranked-card-header">
                       <div className="ranked-card-heading">
@@ -75,9 +192,22 @@ export function SearchPage() {
                         </div>
                       </div>
 
-                      {caregiver.matchPercent !== null ? (
-                        <span className="score-token">{caregiver.matchPercent}% match</span>
-                      ) : null}
+                      <div className="ranked-card-actions">
+                        {caregiver.matchPercent !== null ? (
+                          <span className="score-token">{caregiver.matchPercent}% match</span>
+                        ) : null}
+                        <button
+                          className={`button-secondary shortlist-toggle ${savedIds.includes(caregiver.id) ? "shortlist-toggle-active" : ""}`}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            handleToggleSave(caregiver.id)
+                          }}
+                          type="button"
+                        >
+                          {savedIds.includes(caregiver.id) ? "Saved" : "Shortlist"}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="ranked-card-body">
@@ -103,7 +233,7 @@ export function SearchPage() {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </article>
                 ))}
               </section>
 
@@ -180,7 +310,6 @@ export function SearchPage() {
                   onSelect={() => handleProfileSelect(profile.id)}
                   profile={profile}
                   showActions={false}
-                  variant="picker"
                 />
               ))}
             </div>

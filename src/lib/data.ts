@@ -4,15 +4,19 @@ import { careProfiles } from "../data/careProfiles"
 import { savedCaregivers } from "../data/savedCaregivers"
 import { getCaregiverLanguageDisplay, getRankedCaregiverMatches } from "./matching"
 import type {
+  AgencyHandoffRequest,
   CareProfileWorkspaceCard,
   Caregiver,
   CareProfile,
   SearchCaregiverBreakdownItem,
   SearchCaregiverCard,
+  SavedCaregiver,
   WorkspaceSavedCaregiverCard,
 } from "../types"
 
 const CARE_PROFILES_STORAGE_KEY = "align.careProfiles"
+const SAVED_CAREGIVERS_STORAGE_KEY = "align.savedCaregivers"
+const AGENCY_HANDOFFS_STORAGE_KEY = "align.agencyHandoffs"
 
 export function getAgencies() {
   return agencies
@@ -55,7 +59,77 @@ export function getCaregiverById(caregiverId: string) {
 }
 
 export function getSavedCaregiverLinks() {
-  return savedCaregivers
+  return readStoredSavedCaregivers() ?? savedCaregivers
+}
+
+export function isCaregiverSavedForProfile(careProfileId: string, caregiverId: string) {
+  return getSavedCaregiverLinks().some(
+    (saved) => saved.careProfileId === careProfileId && saved.caregiverId === caregiverId,
+  )
+}
+
+export function saveCaregiverForProfile(careProfileId: string, caregiverId: string) {
+  const existingSaved = getSavedCaregiverLinks()
+  const duplicateEntry = existingSaved.find(
+    (entry) => entry.careProfileId === careProfileId && entry.caregiverId === caregiverId,
+  )
+
+  if (duplicateEntry) {
+    return duplicateEntry
+  }
+
+  const newEntry: SavedCaregiver = {
+    id: `saved-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    careProfileId,
+    caregiverId,
+    savedAt: new Date().toISOString(),
+  }
+
+  writeStoredSavedCaregivers([newEntry, ...existingSaved])
+
+  return newEntry
+}
+
+export function removeSavedCaregiverForProfile(careProfileId: string, caregiverId: string) {
+  const filteredEntries = getSavedCaregiverLinks().filter(
+    (entry) => !(entry.careProfileId === careProfileId && entry.caregiverId === caregiverId),
+  )
+
+  writeStoredSavedCaregivers(filteredEntries)
+}
+
+export function getAgencyHandoffRequests() {
+  return readStoredAgencyHandoffRequests() ?? []
+}
+
+export function getLatestAgencyHandoffForProfile(careProfileId: string) {
+  return (
+    getAgencyHandoffRequests()
+      .filter((entry) => entry.careProfileId === careProfileId)
+      .sort((left, right) => Date.parse(right.submittedAt) - Date.parse(left.submittedAt))[0] ??
+    null
+  )
+}
+
+export function createAgencyHandoffRequest(input: {
+  careProfileId: string
+  agencyId: string
+  caregiverIds: string[]
+  note: string
+}) {
+  const nextEntry: AgencyHandoffRequest = {
+    id: `handoff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    careProfileId: input.careProfileId,
+    agencyId: input.agencyId,
+    caregiverIds: input.caregiverIds,
+    note: input.note.trim(),
+    submittedAt: new Date().toISOString(),
+  }
+
+  const existingEntries = getAgencyHandoffRequests()
+  writeStoredAgencyHandoffRequests([nextEntry, ...existingEntries])
+
+  return nextEntry
 }
 
 export function getCareProfileCardData(): CareProfileWorkspaceCard[] {
@@ -73,7 +147,7 @@ export function getCareProfileCardData(): CareProfileWorkspaceCard[] {
 export function getSavedCaregiverGalleryData(): WorkspaceSavedCaregiverCard[] {
   const profiles = getCareProfiles()
 
-  return savedCaregivers.flatMap((saved) => {
+  return getSavedCaregiverLinks().flatMap((saved) => {
     const caregiver = caregivers.find((entry) => entry.id === saved.caregiverId)
     const profile = profiles.find((entry) => entry.id === saved.careProfileId)
 
@@ -98,6 +172,14 @@ export function getSavedCaregiverGalleryData(): WorkspaceSavedCaregiverCard[] {
       },
     ]
   })
+}
+
+export function getSavedCaregiverGalleryDataForProfile(
+  careProfileId: string,
+): WorkspaceSavedCaregiverCard[] {
+  return getSavedCaregiverGalleryData().filter(
+    (savedCaregiver) => savedCaregiver.careProfileId === careProfileId,
+  )
 }
 
 export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCaregiverCard[] {
@@ -204,4 +286,58 @@ function writeStoredCareProfiles(profiles: CareProfile[]) {
   }
 
   window.localStorage.setItem(CARE_PROFILES_STORAGE_KEY, JSON.stringify(profiles))
+}
+
+function readStoredSavedCaregivers() {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const rawValue = window.localStorage.getItem(SAVED_CAREGIVERS_STORAGE_KEY)
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue)
+    return Array.isArray(parsedValue) ? (parsedValue as SavedCaregiver[]) : null
+  } catch {
+    return null
+  }
+}
+
+function writeStoredSavedCaregivers(savedLinks: SavedCaregiver[]) {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  window.localStorage.setItem(SAVED_CAREGIVERS_STORAGE_KEY, JSON.stringify(savedLinks))
+}
+
+function readStoredAgencyHandoffRequests() {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const rawValue = window.localStorage.getItem(AGENCY_HANDOFFS_STORAGE_KEY)
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue)
+    return Array.isArray(parsedValue) ? (parsedValue as AgencyHandoffRequest[]) : null
+  } catch {
+    return null
+  }
+}
+
+function writeStoredAgencyHandoffRequests(requests: AgencyHandoffRequest[]) {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  window.localStorage.setItem(AGENCY_HANDOFFS_STORAGE_KEY, JSON.stringify(requests))
 }
