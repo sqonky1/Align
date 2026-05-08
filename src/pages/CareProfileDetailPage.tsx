@@ -1,13 +1,8 @@
-import { useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { CaregiverCard } from "../components/cards/CaregiverCard"
 import { CareProfileCard } from "../components/cards/CareProfileCard"
-import { PageHeader } from "../components/layout/PageHeader"
 import {
-  createAgencyHandoffRequest,
   formatDisplayLabel,
-  getAgencies,
-  getLatestAgencyHandoffForProfile,
   getCareProfileById,
   getRankedCaregiverGalleryData,
   getSavedCaregiverGalleryDataForProfile,
@@ -68,35 +63,10 @@ export function CareProfileDetailPage() {
   ]
 
   const savedCaregivers = getSavedCaregiverGalleryDataForProfile(profile.id)
-  const agencies = getAgencies()
-  const latestHandoff = getLatestAgencyHandoffForProfile(profile.id)
-  const [isHandoffOpen, setIsHandoffOpen] = useState(false)
-  const [handoffAgencyId, setHandoffAgencyId] = useState(agencies[0]?.id ?? "")
-  const [handoffNote, setHandoffNote] = useState("")
-  const [handoffReceipt, setHandoffReceipt] = useState(latestHandoff)
   const matchedCaregivers = getRankedCaregiverGalleryData(profile)
   const suggestedCaregivers = matchedCaregivers
     .filter((caregiver) => !savedCaregivers.some((saved) => saved.caregiverId === caregiver.id))
     .slice(0, 3)
-  const handoffAgency =
-    agencies.find((agency) => agency.id === handoffReceipt?.agencyId) ?? null
-
-  function handleHandoffSubmit() {
-    if (savedCaregivers.length === 0 || handoffAgencyId.length === 0) {
-      return
-    }
-
-    const nextRequest = createAgencyHandoffRequest({
-      careProfileId: profile!.id,
-      agencyId: handoffAgencyId,
-      caregiverIds: savedCaregivers.map((entry) => entry.caregiverId),
-      note: handoffNote,
-    })
-
-    setHandoffReceipt(nextRequest)
-    setIsHandoffOpen(false)
-    setHandoffNote("")
-  }
 
   return (
     <section className="page-section">
@@ -105,12 +75,6 @@ export function CareProfileDetailPage() {
           Back
         </button>
       </div>
-
-      <PageHeader
-        eyebrow="Care recipient detail"
-        title={`Review ${profile.name}'s care brief.`}
-        description="This page consolidates the care recipient's structured needs, household context, notes, and shortlist progress in one place."
-      />
 
       <section className="detail-stage">
         <div className="detail-main">
@@ -200,55 +164,31 @@ export function CareProfileDetailPage() {
             <div className="section-header section-header-tight">
               <div>
                 <p className="panel-label">Shortlist</p>
-                <h2>Saved caregivers for {profile.name}</h2>
+                <h2>Shortlisted caregivers for {profile.name}</h2>
               </div>
             </div>
 
             {savedCaregivers.length > 0 ? (
               <>
-                <div className="saved-gallery" aria-label={`${profile.name} saved caregivers`}>
+                <div className="matched-gallery-grid" aria-label={`${profile.name} shortlisted caregivers`}>
                   {savedCaregivers.map((caregiver) => (
                     <CaregiverCard
                       agency={caregiver.agency}
+                      compact
                       href={`/caregivers/${caregiver.caregiverId}?profile=${profile.id}`}
                       key={caregiver.id}
                       name={caregiver.name}
-                      secondaryText="Saved caregiver"
+                      secondaryText="Shortlisted caregiver"
                       summary={caregiver.summary}
                       traits={caregiver.traits}
                     />
                   ))}
                 </div>
-
-                <article className="detail-meta-card handoff-card">
-                  <div className="detail-meta-card-header">
-                    <div>
-                      <p className="panel-label">Agency handoff</p>
-                      <h3>Share shortlist with a partner agency</h3>
-                    </div>
-                    <button
-                      className="button-primary"
-                      onClick={() => setIsHandoffOpen(true)}
-                      type="button"
-                    >
-                      Start handoff
-                    </button>
-                  </div>
-                  <p className="detail-supporting-copy">
-                    Simulate website handoff for hiring and placement based on this shortlist.
-                  </p>
-                  {handoffReceipt && handoffAgency ? (
-                    <p className="handoff-receipt">
-                      Last handoff sent to {handoffAgency.name} on{" "}
-                      {new Date(handoffReceipt.submittedAt).toLocaleString()}.
-                    </p>
-                  ) : null}
-                </article>
               </>
             ) : (
               <div className="detail-meta-card">
                 <p className="detail-supporting-copy">
-                  No caregivers have been saved for this care recipient yet.
+                  No caregivers have been shortlisted for this care recipient yet.
                 </p>
                 <div>
                   <Link className="button-primary" to={getMatchSearchHref(profile.id)}>
@@ -263,16 +203,15 @@ export function CareProfileDetailPage() {
             <div className="section-header section-header-tight">
               <div>
                 <p className="panel-label">Next options</p>
-                <h2>Top suggested caregivers</h2>
+                <h2>Suggested for {profile.name}</h2>
               </div>
             </div>
 
-            <div className="saved-gallery" aria-label={`${profile.name} suggested caregivers`}>
-              {suggestedCaregivers.map((caregiver, index) => (
+            <div className="matched-gallery-grid" aria-label={`${profile.name} suggested caregivers`}>
+              {suggestedCaregivers.map((caregiver) => (
                 <CaregiverCard
                   agency={caregiver.agency}
                   compact
-                  cornerText={`#${index + 1} match`}
                   href={`/caregivers/${caregiver.id}?profile=${profile.id}`}
                   key={caregiver.id}
                   matchPercent={caregiver.matchPercent}
@@ -285,66 +224,6 @@ export function CareProfileDetailPage() {
           </section>
         </div>
       </section>
-
-      {isHandoffOpen ? (
-        <div
-          aria-modal="true"
-          className="modal-backdrop"
-          onClick={() => setIsHandoffOpen(false)}
-          role="dialog"
-        >
-          <div className="modal-panel handoff-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="section-header section-header-tight modal-header">
-              <div>
-                <h2>Agency handoff simulation</h2>
-                <p className="toolbar-caption">
-                  Send {savedCaregivers.length} shortlisted caregivers for {profile.name}.
-                </p>
-              </div>
-              <button
-                aria-label="Close handoff simulation"
-                className="modal-close"
-                onClick={() => setIsHandoffOpen(false)}
-                type="button"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="handoff-agency-grid">
-              {agencies.map((agency) => (
-                <button
-                  className={`handoff-agency-option ${agency.id === handoffAgencyId ? "handoff-agency-option-active" : ""}`}
-                  key={agency.id}
-                  onClick={() => setHandoffAgencyId(agency.id)}
-                  type="button"
-                >
-                  <h3>{agency.name}</h3>
-                  <p>{agency.location}</p>
-                </button>
-              ))}
-            </div>
-
-            <label className="form-field">
-              <span>Agency note (optional)</span>
-              <textarea
-                onChange={(event) => setHandoffNote(event.target.value)}
-                placeholder="Any details to include for coordinator callback and interview scheduling."
-                value={handoffNote}
-              />
-            </label>
-
-            <div className="handoff-modal-actions">
-              <button className="button-secondary" onClick={() => setIsHandoffOpen(false)} type="button">
-                Cancel
-              </button>
-              <button className="button-primary" onClick={handleHandoffSubmit} type="button">
-                Send handoff
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   )
 }

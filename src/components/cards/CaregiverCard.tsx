@@ -11,6 +11,7 @@ type CaregiverCardProps = {
   secondaryText?: string
   cornerText?: string
   compact?: boolean
+  className?: string
 }
 
 export function CaregiverCard({
@@ -23,10 +24,11 @@ export function CaregiverCard({
   secondaryText,
   cornerText,
   compact = false,
+  className,
 }: CaregiverCardProps) {
   return (
     <Link
-      className={`caregiver-card caregiver-card-link ${compact ? "caregiver-card-compact" : ""}`.trim()}
+      className={`caregiver-card caregiver-card-link ${compact ? "caregiver-card-compact" : ""} ${className ?? ""}`.trim()}
       to={href}
     >
       {cornerText ? <span className="card-corner-note">{cornerText}</span> : null}

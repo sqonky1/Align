@@ -18,6 +18,7 @@ import {
   MATCH_LOADING_PARAM_KEY,
   MATCH_LOADING_PARAM_VALUE,
 } from "../lib/matchNavigation"
+import { getRankAccentClass } from "../lib/rankAccents"
 import type { SearchCaregiverBreakdownItem } from "../types"
 
 export function SearchPage() {
@@ -171,7 +172,7 @@ export function SearchPage() {
                 {featuredResults.map((caregiver, index) => (
                   <article
                     aria-label={`Open ${caregiver.name} profile`}
-                    className={`caregiver-card caregiver-card-ranked ${getFeaturedCardClass(index)}`}
+                    className={`caregiver-card caregiver-card-ranked ${getRankAccentClass(index)}`}
                     key={caregiver.id}
                     onClick={() => handleFeaturedCardSelect(caregiver.id)}
                     onKeyDown={(event) => {
@@ -330,18 +331,6 @@ function getBreakdownStatusClass(item: SearchCaregiverBreakdownItem) {
   }
 
   return "breakdown-chip-partial"
-}
-
-function getFeaturedCardClass(index: number) {
-  if (index === 0) {
-    return "caregiver-card-rank-gold"
-  }
-
-  if (index === 1) {
-    return "caregiver-card-rank-silver"
-  }
-
-  return "caregiver-card-rank-bronze"
 }
 
 function getCaregiverDetailHref(caregiverId: string, profileId?: string) {

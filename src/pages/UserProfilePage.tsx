@@ -51,26 +51,24 @@ export function UserProfilePage() {
         </div>
       </section>
 
-      <section className="split-stage">
-        <section className="section-shell">
-          <div className="section-header">
-            <h2>Saved caregivers</h2>
-          </div>
+      <section className="section-shell">
+        <div className="section-header">
+          <h2>Shortlisted caregivers</h2>
+        </div>
 
-          <div className="saved-gallery" aria-label="Saved caregivers preview">
-            {savedCaregivers.map((caregiver) => (
-              <CaregiverCard
-                agency={caregiver.agency}
-                href={`/caregivers/${caregiver.caregiverId}?profile=${caregiver.careProfileId}`}
-                key={caregiver.id}
-                name={caregiver.name}
-                secondaryText={caregiver.note}
-                summary={caregiver.summary}
-                traits={caregiver.traits}
-              />
-            ))}
-          </div>
-        </section>
+        <div className="saved-gallery" aria-label="Shortlisted caregivers preview">
+          {savedCaregivers.map((caregiver) => (
+            <CaregiverCard
+              agency={caregiver.agency}
+              href={`/caregivers/${caregiver.caregiverId}?profile=${caregiver.careProfileId}`}
+              key={caregiver.id}
+              name={caregiver.name}
+              secondaryText={caregiver.note}
+              summary={caregiver.summary}
+              traits={caregiver.traits}
+            />
+          ))}
+        </div>
       </section>
     </section>
   )

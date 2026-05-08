@@ -105,7 +105,7 @@ export type WorkspaceSavedCaregiverCard = {
   agency: string
   summary: string
   note: string
-  traits: string[]
+  traits: SearchCaregiverPill[]
 }
 
 export type CareProfileWorkspaceCard = {

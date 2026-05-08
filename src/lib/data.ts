@@ -3,6 +3,7 @@ import { caregivers } from "../data/caregivers"
 import { careProfiles } from "../data/careProfiles"
 import { savedCaregivers } from "../data/savedCaregivers"
 import { getCaregiverLanguageDisplay, getRankedCaregiverMatches } from "./matching"
+import { buildCaregiverSnapshotPills } from "./caregiverPills"
 import type {
   AgencyHandoffRequest,
   CareProfileWorkspaceCard,
@@ -164,11 +165,7 @@ export function getSavedCaregiverGalleryData(): WorkspaceSavedCaregiverCard[] {
         agency: caregiver.agencyName,
         summary: caregiver.bio,
         note: `Saved for ${profile.name}`,
-        traits: [
-          formatLabel(caregiver.careConditions[0] ?? "general support"),
-          caregiver.languages[0] ?? "Language not set",
-          `${caregiver.yearsOfExperience} years`,
-        ],
+        traits: buildCaregiverSnapshotPills(caregiver),
       },
     ]
   })
@@ -204,11 +201,7 @@ export function getBrowseCaregiverGalleryData(): SearchCaregiverCard[] {
     agency: caregiver.agencyName,
     matchPercent: null,
     summary: caregiver.bio,
-    traits: [
-      { label: getCaregiverLanguageDisplay(caregiver) },
-      { label: formatLabel(caregiver.careConditions[0] ?? "general support") },
-      { label: `${caregiver.yearsOfExperience} years` },
-    ],
+    traits: buildCaregiverSnapshotPills(caregiver),
     alert: null,
     breakdown: [],
   }))
@@ -220,8 +213,6 @@ export function formatDisplayLabel(value: string) {
     .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
     .join(" ")
 }
-
-const formatLabel = formatDisplayLabel
 
 function toSearchBreakdownItem(item: {
   key: string
