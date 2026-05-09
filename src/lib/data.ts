@@ -142,6 +142,7 @@ export function getCareProfileCardData(): CareProfileWorkspaceCard[] {
     age: profile.age,
     gender: profile.gender,
     preferredLanguage: profile.preferredLanguage,
+    preferredLanguages: profile.preferredLanguages,
   }))
 }
 
@@ -203,7 +204,7 @@ export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCareg
     alert: result.alert,
     breakdown: result.breakdown
       .filter((item) => item.maxScore > 0)
-      .map((item) => toSearchBreakdownItem(item, result.caregiver, profile.preferredLanguage)),
+      .map((item) => toSearchBreakdownItem(item, result.caregiver, profile.preferredLanguages)),
   }))
 }
 
@@ -235,7 +236,7 @@ function toSearchBreakdownItem(item: {
   maxScore: number
   matchedValues: string[]
   missingValues: string[]
-}, caregiver: Caregiver, preferredLanguage: string): SearchCaregiverBreakdownItem {
+}, caregiver: Caregiver, preferredLanguages: string[]): SearchCaregiverBreakdownItem {
   const scorePercent = item.maxScore > 0 ? Math.round((item.score / item.maxScore) * 100) : 0
 
   if (item.key === "language") {
@@ -243,7 +244,7 @@ function toSearchBreakdownItem(item: {
       key: item.key,
       label: item.label,
       scorePercent,
-      summary: getCaregiverLanguageDisplay(caregiver, preferredLanguage),
+      summary: getCaregiverLanguageDisplay(caregiver, preferredLanguages),
     }
   }
 
@@ -266,6 +267,21 @@ function toSearchBreakdownItem(item: {
   }
 }
 
+
+function normalizeCareProfile(profile: CareProfile) {
+  const preferredLanguages = Array.isArray(profile.preferredLanguages)
+    ? profile.preferredLanguages.map((value) => value.trim()).filter(Boolean)
+    : profile.preferredLanguage
+      ? [profile.preferredLanguage.trim()].filter(Boolean)
+      : []
+
+  return {
+    ...profile,
+    preferredLanguage: profile.preferredLanguage?.trim?.() ?? preferredLanguages[0] ?? "",
+    preferredLanguages,
+  }
+}
+
 function readStoredCareProfiles() {
   if (typeof window === "undefined") {
     return null
@@ -279,7 +295,7 @@ function readStoredCareProfiles() {
 
   try {
     const parsedValue = JSON.parse(rawValue)
-    return Array.isArray(parsedValue) ? (parsedValue as CareProfile[]) : null
+    return Array.isArray(parsedValue) ? parsedValue.map(normalizeCareProfile) : null
   } catch {
     return null
   }
@@ -290,7 +306,7 @@ function writeStoredCareProfiles(profiles: CareProfile[]) {
     return
   }
 
-  window.localStorage.setItem(CARE_PROFILES_STORAGE_KEY, JSON.stringify(profiles))
+  window.localStorage.setItem(CARE_PROFILES_STORAGE_KEY, JSON.stringify(profiles.map(normalizeCareProfile)))
 }
 
 function readStoredSavedCaregivers() {

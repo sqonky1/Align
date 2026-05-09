@@ -295,6 +295,7 @@ export function CaregiverDetailPage() {
                         age: activeProfile.age,
                         gender: activeProfile.gender,
                         preferredLanguage: activeProfile.preferredLanguage,
+                        preferredLanguages: activeProfile.preferredLanguages,
                     }}
                     showActions={false}
                     variant="anchor"

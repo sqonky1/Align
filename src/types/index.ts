@@ -10,6 +10,7 @@ export type CareProfile = {
   age: number
   gender: "male" | "female"
   preferredLanguage: string
+  preferredLanguages: string[]
   conditions: string[]
   dailyCareTasks: string[]
   mobilitySupport: string[]
@@ -26,6 +27,7 @@ export type CareProfileFormValues = {
   age: string
   gender: "" | "male" | "female"
   preferredLanguage: string
+  preferredLanguages: string[]
   conditions: string[]
   dailyCareTasks: string[]
   mobilitySupport: string[]
@@ -117,4 +119,5 @@ export type CareProfileWorkspaceCard = {
   age: number
   gender: "male" | "female"
   preferredLanguage: string
+  preferredLanguages: string[]
 }

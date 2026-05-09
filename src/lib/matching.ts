@@ -1,4 +1,4 @@
-import type { CareProfile, Caregiver, SearchCaregiverPill, SearchCaregiverPillTone } from "../types"
+import type { CareProfile, Caregiver, SearchCaregiverPill } from "../types"
 
 const MATCH_WEIGHTS = {
   language: 32,
@@ -116,17 +116,29 @@ export function scoreCaregiverMatch(
 }
 
 function scoreLanguage(profile: CareProfile, caregiver: Caregiver): MatchDimensionResult {
-  const preferredLanguage = profile.preferredLanguage.trim()
-  const hasPreferredLanguage =
-    preferredLanguage.length > 0 && caregiver.languages.includes(preferredLanguage)
+  const preferredLanguages = getPreferredLanguages(profile)
+
+  if (preferredLanguages.length === 0) {
+    return {
+      key: "language",
+      label: "Language",
+      score: 0,
+      maxScore: 0,
+      matchedValues: [],
+      missingValues: [],
+    }
+  }
+
+  const matchedValues = preferredLanguages.filter((language) => caregiver.languages.includes(language))
+  const missingValues = preferredLanguages.filter((language) => !caregiver.languages.includes(language))
 
   return {
     key: "language",
     label: "Language",
-    score: hasPreferredLanguage ? MATCH_WEIGHTS.language : 0,
-    maxScore: preferredLanguage.length > 0 ? MATCH_WEIGHTS.language : 0,
-    matchedValues: hasPreferredLanguage ? [preferredLanguage] : [],
-    missingValues: hasPreferredLanguage || preferredLanguage.length === 0 ? [] : [preferredLanguage],
+    score: (matchedValues.length / preferredLanguages.length) * MATCH_WEIGHTS.language,
+    maxScore: MATCH_WEIGHTS.language,
+    matchedValues,
+    missingValues,
   }
 }
 
@@ -224,7 +236,11 @@ function buildMatchSummary(
   const strengths: string[] = []
 
   if (language?.matchedValues.length) {
-    strengths.push(`speaks ${language.matchedValues[0]}`)
+    strengths.push(
+      language.matchedValues.length === 1
+        ? `speaks ${language.matchedValues[0]}`
+        : `covers ${language.matchedValues.length} preferred languages`,
+    )
   }
 
   if (conditions && conditions.matchedValues.length > 0) {
@@ -263,46 +279,29 @@ function buildMatchSummary(
     )
   }
 
-  strengths.push(`${caregiver.yearsOfExperience} years of experience`)
+  if (strengths.length === 0) {
+    return `${caregiver.name} brings ${caregiver.yearsOfExperience} years of experience, but this profile still needs closer manual review for practical fit.`
+  }
 
-  return strengths.length > 1
-    ? `${capitalizeSentence(joinPhrases(strengths.slice(0, 3)))}.`
-    : `Offers ${caregiver.yearsOfExperience} years of senior care experience.`
+  const lead = strengths.slice(0, 2).join(" and ")
+  return `${caregiver.name} stands out because the caregiver ${lead}. They bring ${caregiver.yearsOfExperience} years of experience for this care setup.`
 }
 
 function buildMatchAlert(profile: CareProfile, breakdown: MatchDimensionResult[]) {
   const language = breakdown.find((item) => item.key === "language")
+  const mobilitySupport = breakdown.find((item) => item.key === "mobilitySupport")
+  const medicationSupport = breakdown.find((item) => item.key === "medicationSupport")
 
-  if (language?.missingValues.length) {
-    return `Does not cover ${profile.preferredLanguage}, so communication fit is weaker.`
+  if (language && language.maxScore > 0 && language.matchedValues.length === 0) {
+    return `Does not cover ${getPreferredLanguages(profile).join(", ")}, so communication fit is weaker.`
   }
 
-  const largestGap = breakdown
-    .filter((item) => item.maxScore > 0 && item.missingValues.length > 0)
-    .sort((left, right) => right.maxScore - left.maxScore)[0]
-
-  if (!largestGap) {
-    return null
+  if (mobilitySupport && mobilitySupport.missingValues.length > 0) {
+    return `Missing ${formatList(mobilitySupport.missingValues.map(formatTraitLabel))} support.`
   }
 
-  if (largestGap.key === "conditions") {
-    return `Limited coverage for ${formatList(largestGap.missingValues.map(formatDisplayLabel))}.`
-  }
-
-  if (largestGap.key === "dailyCareTasks") {
-    return `Missing some daily support needs such as ${formatDisplayLabel(largestGap.missingValues[0])}.`
-  }
-
-  if (largestGap.key === "mobilitySupport") {
-    return `Mobility support gap around ${formatDisplayLabel(largestGap.missingValues[0])}.`
-  }
-
-  if (largestGap.key === "medicationSupport") {
-    return `Medication support gap around ${formatDisplayLabel(largestGap.missingValues[0])}.`
-  }
-
-  if (largestGap.key === "experience") {
-    return `Has less experience than the profile complexity would ideally call for.`
+  if (medicationSupport && medicationSupport.missingValues.length > 0) {
+    return `Medication support gap: ${formatList(medicationSupport.missingValues.map(formatTraitLabel))}.`
   }
 
   return null
@@ -312,105 +311,78 @@ function buildMatchTraits(
   profile: CareProfile,
   caregiver: Caregiver,
   breakdown: MatchDimensionResult[],
-) {
-  const traits: SearchCaregiverPill[] = []
+): SearchCaregiverPill[] {
   const language = breakdown.find((item) => item.key === "language")
   const conditions = breakdown.find((item) => item.key === "conditions")
   const dailyCareTasks = breakdown.find((item) => item.key === "dailyCareTasks")
   const mobilitySupport = breakdown.find((item) => item.key === "mobilitySupport")
   const medicationSupport = breakdown.find((item) => item.key === "medicationSupport")
-  const experience = breakdown.find((item) => item.key === "experience")
 
-  if (language && profile.preferredLanguage.trim().length > 0) {
-    traits.push({
-      label: getCaregiverLanguageDisplay(caregiver, profile.preferredLanguage),
-      tone: getDimensionTone(language),
+  const pills: SearchCaregiverPill[] = []
+
+  if (language && getPreferredLanguages(profile).length > 0) {
+    pills.push({
+      label: getCaregiverLanguageDisplay(caregiver, getPreferredLanguages(profile)),
+      tone: language.matchedValues.length > 0 ? "strong" : "gap",
     })
   }
 
-  if (conditions && profile.conditions.length > 0) {
-    traits.push({
-      label: `${conditions.matchedValues.length}/${profile.conditions.length} conditions`,
-      tone: getDimensionTone(conditions),
+  addCoveragePills(pills, conditions)
+  addCoveragePills(pills, dailyCareTasks)
+  addCoveragePills(pills, mobilitySupport)
+  addCoveragePills(pills, medicationSupport)
+
+  if (pills.length === 0) {
+    pills.push({
+      label: `${caregiver.yearsOfExperience} years experience`,
+      tone: "partial",
     })
   }
 
-  if (dailyCareTasks && profile.dailyCareTasks.length > 0) {
-    traits.push({
-      label: `${dailyCareTasks.matchedValues.length}/${profile.dailyCareTasks.length} daily tasks`,
-      tone: getDimensionTone(dailyCareTasks),
-    })
-  }
-
-  if (mobilitySupport && profile.mobilitySupport.length > 0) {
-    traits.push({
-      label: `${mobilitySupport.matchedValues.length}/${profile.mobilitySupport.length} mobility`,
-      tone: getDimensionTone(mobilitySupport),
-    })
-  }
-
-  if (medicationSupport && profile.medicationSupport.length > 0) {
-    traits.push({
-      label: `${medicationSupport.matchedValues.length}/${profile.medicationSupport.length} medication`,
-      tone: getDimensionTone(medicationSupport),
-    })
-  }
-
-  if (experience) {
-    traits.push({
-      label: `${caregiver.yearsOfExperience} years`,
-      tone: getDimensionTone(experience),
-    })
-  }
-
-  return traits.slice(0, 4)
+  return pills.slice(0, 4)
 }
 
-function getDimensionTone(item: MatchDimensionResult): SearchCaregiverPillTone {
-  if (item.maxScore > 0 && item.score === item.maxScore) {
-    return "strong"
-  }
-
-  if (item.score === 0) {
-    return "gap"
-  }
-
-  return "partial"
-}
-
-export function getCaregiverLanguageDisplay(
-  caregiverOrLanguages: Caregiver | string[],
-  preferredLanguage?: string,
+function addCoveragePills(
+  pills: SearchCaregiverPill[],
+  dimension: MatchDimensionResult | undefined,
 ) {
-  const normalizedPreferredLanguage = preferredLanguage?.trim()
-  const languages = Array.isArray(caregiverOrLanguages)
-    ? caregiverOrLanguages
-    : caregiverOrLanguages.languages
-
-  if (
-    normalizedPreferredLanguage &&
-    normalizedPreferredLanguage.length > 0 &&
-    languages.includes(normalizedPreferredLanguage)
-  ) {
-    return formatLanguageDisplayLabel(normalizedPreferredLanguage)
+  if (!dimension || dimension.maxScore === 0) {
+    return
   }
 
-  return formatLanguageDisplayLabel(languages[0] ?? "Language not set")
-}
-
-function describeCoverage(label: string, matchedCount: number, requestedCount: number) {
-  if (matchedCount === requestedCount) {
-    return `covers all ${requestedCount} ${pluralize(label, requestedCount)}`
+  if (dimension.matchedValues.length > 0) {
+    pills.push({
+      label:
+        dimension.matchedValues.length === dimension.missingValues.length + dimension.matchedValues.length
+          ? `${dimension.label} covered`
+          : `${dimension.matchedValues.length}/${dimension.matchedValues.length + dimension.missingValues.length} ${dimension.label.toLowerCase()} covered`,
+      tone: dimension.missingValues.length === 0 ? "strong" : "partial",
+    })
+    return
   }
 
-  return `covers ${matchedCount} of ${requestedCount} ${pluralize(label, requestedCount)}`
+  pills.push({
+    label: `${dimension.label} gap`,
+    tone: "gap",
+  })
 }
 
-function pluralize(label: string, count: number) {
-  return count === 1 ? label : `${label}s`
+function describeCoverage(label: string, covered: number, total: number) {
+  if (covered >= total) {
+    return `covers all requested ${label}${total > 1 ? "s" : ""}`
+  }
+
+  return `covers ${covered} of ${total} requested ${label}${total > 1 ? "s" : ""}`
 }
 
-function joinPhrases(values: string[]) {
+function formatTraitLabel(value: string) {
+  return value
+    .split("_")
+    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
+    .join(" ")
+}
+
+function formatList(values: string[]) {
   if (values.length <= 1) {
     return values[0] ?? ""
   }
@@ -419,31 +391,50 @@ function joinPhrases(values: string[]) {
     return `${values[0]} and ${values[1]}`
   }
 
-  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`
+  return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`
 }
 
-function capitalizeSentence(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
+export function getCaregiverLanguageDisplay(
+  caregiver: Caregiver,
+  preferredLanguage?: string | string[],
+) {
+  const preferredLanguages = Array.isArray(preferredLanguage)
+    ? preferredLanguage.map((value) => value.trim()).filter(Boolean)
+    : preferredLanguage
+      ? [preferredLanguage.trim()].filter(Boolean)
+      : []
 
-function formatList(values: string[]) {
-  return joinPhrases(values)
-}
+  if (preferredLanguages.length > 0) {
+    const matches = preferredLanguages.filter((language) => caregiver.languages.includes(language))
 
-function formatDisplayLabel(value: string) {
-  return value
-    .split("_")
-    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
-    .join(" ")
-}
+    if (matches.length > 0) {
+      return matches.length === 1
+        ? `Speaks ${matches[0]}`
+        : `Speaks ${matches.join(", ")}`
+    }
 
-function formatLanguageDisplayLabel(value: string) {
-  if (value === "Malay") {
-    return "Bahasa Melayu"
+    return `Missing ${preferredLanguages.join(", ")}`
   }
 
-  return value
-    .split(" ")
-    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1).toLowerCase())
-    .join(" ")
+  if (caregiver.languages.length === 0) {
+    return "Languages not listed"
+  }
+
+  return `Speaks ${caregiver.languages.join(", ")}`
+}
+
+function getPreferredLanguages(profile: CareProfile) {
+  const preferredLanguages = Array.isArray(profile.preferredLanguages)
+    ? profile.preferredLanguages.map((value) => value.trim()).filter(Boolean)
+    : []
+
+  if (preferredLanguages.length > 0) {
+    return preferredLanguages
+  }
+
+  const fallbackPreferredLanguage = typeof profile.preferredLanguage === "string"
+    ? profile.preferredLanguage.trim()
+    : ""
+
+  return fallbackPreferredLanguage.length > 0 ? [fallbackPreferredLanguage] : []
 }

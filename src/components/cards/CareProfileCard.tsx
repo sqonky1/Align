@@ -82,7 +82,7 @@ export function CareProfileCard({
         <h3>{profile.name}</h3>
         <p>
           {profile.age} years old · {formatDisplayLabel(profile.gender)} ·{" "}
-          {profile.preferredLanguage}
+          {profile.preferredLanguages.length > 0 ? profile.preferredLanguages.join(", ") : profile.preferredLanguage}
         </p>
       </div>
 

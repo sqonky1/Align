@@ -59,6 +59,7 @@ export function getEmptyCareProfileFormValues(): CareProfileFormValues {
     age: "",
     gender: "",
     preferredLanguage: "",
+    preferredLanguages: [],
     conditions: [],
     dailyCareTasks: [],
     mobilitySupport: [],
@@ -70,11 +71,19 @@ export function getEmptyCareProfileFormValues(): CareProfileFormValues {
 }
 
 export function toCareProfileFormValues(profile: CareProfile): CareProfileFormValues {
+  const preferredLanguages =
+    profile.preferredLanguages.length > 0
+      ? profile.preferredLanguages
+      : profile.preferredLanguage
+        ? [profile.preferredLanguage]
+        : []
+
   return {
     name: profile.name,
     age: String(profile.age),
     gender: profile.gender,
     preferredLanguage: profile.preferredLanguage,
+    preferredLanguages,
     conditions: profile.conditions,
     dailyCareTasks: profile.dailyCareTasks,
     mobilitySupport: profile.mobilitySupport,
@@ -90,23 +99,33 @@ export function buildCareProfileFromForm(
   existingProfile?: CareProfile | null,
 ): CareProfile {
   const timestamp = new Date().toISOString()
+  const normalizedPreferredLanguages = values.preferredLanguages
+    .map((value) => value.trim())
+    .filter(Boolean)
+  const primaryPreferredLanguage =
+    values.preferredLanguage.trim() || normalizedPreferredLanguages[0] || ""
 
   return {
     id: existingProfile?.id ?? createProfileId(),
     name: values.name.trim(),
     age: Number(values.age) || 0,
     gender: values.gender || "female",
-    preferredLanguage: values.preferredLanguage,
-    conditions: values.conditions,
-    dailyCareTasks: values.dailyCareTasks,
-    mobilitySupport: values.mobilitySupport,
-    medicationSupport: values.medicationSupport,
-    householdContext: values.householdContext,
+    preferredLanguage: primaryPreferredLanguage,
+    preferredLanguages: normalizedPreferredLanguages,
+    conditions: normalizeTextArray(values.conditions),
+    dailyCareTasks: normalizeTextArray(values.dailyCareTasks),
+    mobilitySupport: normalizeTextArray(values.mobilitySupport),
+    medicationSupport: normalizeTextArray(values.medicationSupport),
+    householdContext: normalizeTextArray(values.householdContext),
     riskNotes: values.riskNotes.trim(),
     additionalNotes: values.additionalNotes.trim(),
     createdAt: existingProfile?.createdAt ?? timestamp,
     updatedAt: timestamp,
   }
+}
+
+function normalizeTextArray(values: string[]) {
+  return values.map((value) => value.trim()).filter(Boolean)
 }
 
 function createProfileId() {

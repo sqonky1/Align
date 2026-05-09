@@ -2783,3 +2783,512 @@ h3 {
     grid-row: 2;
   }
 }
+
+.onboarding-mode-gate,
+.upload-shell,
+.document-preview-shell,
+.inline-status-shell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(252, 250, 247, 0.96));
+}
+
+.mode-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mode-choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(31, 92, 82, 0.14);
+  background: linear-gradient(160deg, rgba(255, 253, 248, 0.95), rgba(239, 231, 216, 0.7));
+  text-align: left;
+  cursor: pointer;
+}
+
+.mode-choice-card-active {
+  border-color: rgba(31, 92, 82, 0.42);
+  box-shadow: 0 18px 34px rgba(31, 92, 82, 0.12);
+}
+
+.onboarding-workbench {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.35fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.onboarding-side-column {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.file-drop-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px dashed rgba(31, 92, 82, 0.32);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.file-drop-zone input {
+  margin-top: 8px;
+}
+
+.selected-file-list,
+.document-preview-stack,
+.field-meta-stack,
+.validation-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upload-file-card,
+.document-audit-card,
+.document-preview-card,
+.caregiver-onboarding-summary-card,
+.empty-inline-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(31, 42, 42, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.document-preview-card img,
+.document-preview-card iframe {
+  width: 100%;
+  min-height: 240px;
+  border: 0;
+  border-radius: 12px;
+  background: #f5f1ea;
+}
+
+.document-audit-card pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: 0.8rem/1.45 ui-monospace, SFMono-Regular, monospace;
+  color: var(--text-muted);
+}
+
+.caregiver-onboarding-form {
+  gap: 24px;
+}
+
+.onboarding-field-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.review-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.review-chip-medium,
+.field-status-medium {
+  background: rgba(184, 132, 47, 0.1);
+  border: 1px solid rgba(184, 132, 47, 0.24);
+}
+
+.review-chip-low,
+.field-status-low,
+.field-status-invalid {
+  background: rgba(184, 92, 75, 0.08);
+  border: 1px solid rgba(184, 92, 75, 0.24);
+}
+
+.review-chip-reviewed,
+.field-status-reviewed {
+  background: rgba(63, 122, 92, 0.08);
+  border: 1px solid rgba(63, 122, 92, 0.2);
+}
+
+.repeater-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+}
+
+.repeater-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(31, 42, 42, 0.1);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.form-actions-inline {
+  align-items: center;
+}
+
+.status-note {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.status-note-error,
+.field-meta-error {
+  color: var(--danger);
+}
+
+.status-note-success {
+  color: var(--success);
+}
+
+.field-meta-warning {
+  color: var(--warning);
+}
+
+.caregiver-onboarding-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 980px) {
+  .onboarding-workbench,
+  .mode-choice-grid,
+  .onboarding-field-grid,
+  .caregiver-onboarding-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.form-section-assist {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 243, 235, 0.96));
+  border-radius: var(--radius-md);
+}
+
+.document-assist-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.care-intake-gate {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.care-intake-gate-card,
+.care-intake-upload-panel,
+.care-intake-review-banner {
+  border: 1px solid rgba(31, 92, 82, 0.12);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(252, 249, 243, 0.96));
+  box-shadow: var(--shadow-soft);
+}
+
+.care-intake-gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 28px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.care-intake-gate-card:hover,
+.care-intake-gate-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(31, 92, 82, 0.24);
+  box-shadow: var(--shadow);
+}
+
+.care-intake-upload-stage {
+  display: flex;
+  justify-content: center;
+}
+
+.care-intake-upload-panel {
+  width: min(760px, 100%);
+  padding: 28px;
+}
+
+.care-intake-file-drop-zone {
+  min-height: 160px;
+  justify-content: center;
+}
+
+.care-intake-progress-shell {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: rgba(31, 92, 82, 0.05);
+  border: 1px solid rgba(31, 92, 82, 0.12);
+}
+
+.care-intake-spinner {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 3px solid rgba(31, 92, 82, 0.16);
+  border-top-color: var(--primary);
+  animation: care-intake-spin 900ms linear infinite;
+}
+
+.care-intake-progress-bar {
+  position: relative;
+  overflow: hidden;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(31, 92, 82, 0.08);
+}
+
+.care-intake-progress-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 36%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), #6b8a8f);
+  animation: care-intake-progress 1.4s ease-in-out infinite;
+}
+
+.care-intake-form-shell {
+  gap: 24px;
+}
+
+.care-intake-review-banner {
+  padding: 16px 18px;
+}
+
+.care-intake-summary-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.option-group {
+  gap: 12px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(31, 42, 42, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.option-search-results {
+  border-radius: 16px;
+  border: 1px solid rgba(31, 92, 82, 0.12);
+  box-shadow: var(--shadow-soft);
+}
+
+.option-result-create {
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+
+.field-status-medium {
+  background: rgba(184, 132, 47, 0.06);
+  border-color: rgba(184, 132, 47, 0.24);
+}
+
+.field-status-low {
+  background: rgba(184, 92, 75, 0.05);
+  border-color: rgba(184, 92, 75, 0.24);
+}
+
+.field-meta-stack {
+  margin-top: 6px;
+}
+
+@keyframes care-intake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes care-intake-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  50% {
+    transform: translateX(110%);
+  }
+
+  100% {
+    transform: translateX(240%);
+  }
+}
+
+@media (max-width: 980px) {
+  .care-intake-gate,
+  .editor-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .care-intake-summary-panel {
+    position: static;
+  }
+}
+
+.care-intake-page-section .page-header,
+.care-intake-page-section .page-description,
+.care-intake-page-section .page-eyebrow {
+  display: none;
+}
+
+.care-intake-rounded-box,
+.care-intake-upload-panel,
+.care-intake-gate-card,
+.care-intake-review-bubble,
+.care-intake-summary-field input,
+.file-drop-zone,
+.option-select,
+.form-field input,
+.form-field select,
+.form-field textarea {
+  border-radius: 24px;
+}
+
+.field-status-medium,
+.field-status-low,
+.field-status-invalid {
+  background: transparent;
+  border-color: rgba(31, 42, 42, 0.12);
+}
+
+.care-intake-review-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.care-intake-review-bubble {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid rgba(184, 132, 47, 0.22);
+  background: linear-gradient(180deg, rgba(255, 251, 244, 0.96), rgba(255, 247, 235, 0.96));
+  box-shadow: var(--shadow-soft);
+}
+
+.care-intake-review-bubble::after {
+  content: "";
+  position: absolute;
+  left: 28px;
+  bottom: -10px;
+  width: 18px;
+  height: 18px;
+  transform: rotate(45deg);
+  background: #fff7eb;
+  border-right: 1px solid rgba(184, 132, 47, 0.22);
+  border-bottom: 1px solid rgba(184, 132, 47, 0.22);
+}
+
+.care-intake-review-reasoning {
+  color: var(--heading);
+  font-weight: 600;
+}
+
+.care-intake-review-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.care-intake-summary-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.care-intake-summary-field {
+  display: grid;
+  gap: 6px;
+}
+
+.care-intake-summary-field span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.care-intake-summary-field input {
+  min-height: 50px;
+  padding: 0 18px;
+  border: 1px solid rgba(31, 42, 42, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+}
+
+.care-intake-suggestion-block {
+  display: grid;
+  gap: 6px;
+}
+
+.care-intake-suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-chip-suggested {
+  border: 1px solid rgba(31, 92, 82, 0.16);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--heading);
+}
+
+.care-intake-suggestion-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(31, 42, 42, 0.08);
+}
+
+.care-intake-suggestion-action {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(31, 42, 42, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--primary-strong);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.care-intake-suggestion-action-reject {
+  color: var(--danger);
+}
+
+.care-intake-suggestion-action:hover,
+.care-intake-suggestion-action:focus-visible {
+  transform: translateY(-1px);
+}

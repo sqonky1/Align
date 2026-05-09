@@ -62,3 +62,4 @@ function SearchIcon() {
     </svg>
   )
 }
+

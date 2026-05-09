@@ -66,7 +66,7 @@ export function CareProfileDetailPage() {
     { label: "Gender", value: formatDisplayLabel(profile.gender) },
     {
       label: "Preferred language",
-      value: profile.preferredLanguage,
+      value: profile.preferredLanguages.length > 0 ? profile.preferredLanguages.join(", ") : profile.preferredLanguage,
       className: "detail-core-stat-wide",
     },
   ]
