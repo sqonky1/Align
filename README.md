@@ -77,6 +77,11 @@ npm run build
 
 If `OPENAI_API_KEY` is missing, match-reasoning requests fail by design.
 
+## Documentation
+
+- Developer documentation: this `README.md`
+- Product usage guide: [UserGuide.md](/Users/lawrence/Documents/Align/UserGuide.md)
+
 ## Medical Document Processing (Next Implementation)
 
 Next, we will add medical document processing to prefill a care profile from uploaded notes/reports while keeping human review in the loop.
