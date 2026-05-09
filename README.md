@@ -52,7 +52,7 @@ npm install
 
 ```bash
 OPENAI_API_KEY=your_key
-OPENAI_MODEL=gpt-5.2-mini
+OPENAI_MODEL=gpt-5.2
 PORT=8787
 ```
 

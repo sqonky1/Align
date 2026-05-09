@@ -342,7 +342,7 @@ Success response:
   },
   "audit": {
     "extracted_at": "2026-05-09T12:00:00.000Z",
-    "model_name": "gpt-5.2-mini",
+    "model_name": "gpt-5-mini",
     "model_version": null,
     "prompt_version": "2026-05-09.v1",
     "raw_text_by_document": [],

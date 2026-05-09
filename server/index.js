@@ -24,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } })
 const port = Number(process.env.PORT ?? 8787)
-const model = process.env.OPENAI_MODEL ?? "gpt-5.2-mini"
+const model = process.env.OPENAI_MODEL ?? "gpt-5.2"
 const apiKey = process.env.OPENAI_API_KEY
 const app = express()
 const cache = new Map()
@@ -778,4 +778,3 @@ function sanitizeTextValues(values) {
     .filter((value, index) => typeof value === "string" && value.trim().length > 0 && values.findIndex((entry) => entry === value) === index)
     .map((value) => value.trim())
 }
-

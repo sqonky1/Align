@@ -214,6 +214,12 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
     }))
   }
 
+  function handleFileSelection(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? [])
+    setSelectedFiles(files)
+    setExtractionError(null)
+  }
+
   async function handleExtractDocuments() {
     if (selectedFiles.length === 0) {
       setExtractionError("Select at least one file first.")
@@ -289,7 +295,7 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
               <input
                 accept=".pdf,image/*"
                 multiple
-                onChange={(event) => setSelectedFiles(Array.from(event.target.files ?? []))}
+                onChange={handleFileSelection}
                 type="file"
               />
             </label>
