@@ -6,7 +6,7 @@ import {
 export const CAREGIVER_EXTRACTION_PROMPT_VERSION = "2026-05-09.v1"
 
 export const caregiverExtractionSystemPrompt = [
-  "You extract caregiver onboarding data from OCR or digital document text.",
+  "You extract helper onboarding data from OCR or digital document text.",
   "Return JSON only.",
   "Do not return markdown.",
   "Do not add commentary.",
@@ -26,7 +26,7 @@ export const caregiverExtractionSystemPrompt = [
 export function buildCaregiverExtractionUserPrompt(documents) {
   return JSON.stringify(
     {
-      task: "Extract caregiver onboarding data into the target schema.",
+      task: "Extract helper onboarding data into the target schema.",
       prompt_version: CAREGIVER_EXTRACTION_PROMPT_VERSION,
       target_field_paths: caregiverProfileFieldPaths,
       response_schema: caregiverExtractionResultJsonSchema,

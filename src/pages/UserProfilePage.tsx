@@ -31,7 +31,7 @@ export function UserProfilePage() {
 
   return (
     <section className="page-section">
-      <PageHeader title="Welcome back." description="" />
+      <PageHeader title="Home" description="" />
 
       <div className="workspace-tabs" aria-label="Workspace sections" role="tablist">
         <button
@@ -54,7 +54,7 @@ export function UserProfilePage() {
           role="tab"
           type="button"
         >
-          Shortlisted caregivers
+          Shortlisted helpers
         </button>
       </div>
 
@@ -75,9 +75,12 @@ export function UserProfilePage() {
           <div className="profile-card-grid" aria-label="Care profiles">
             {careProfiles.map((profile) => (
               <CareProfileCard
+                contextLabel=""
+                className="profile-card-home-compact"
                 key={profile.id}
                 onDelete={() => handleDeleteProfile(profile.id)}
                 profile={profile}
+                showGlyph={false}
               />
             ))}
           </div>
@@ -91,10 +94,10 @@ export function UserProfilePage() {
           role="tabpanel"
         >
           <div className="section-header">
-            <h2>Shortlisted Caregivers</h2>
+            <h2>Shortlisted Helpers</h2>
           </div>
 
-          <div className="saved-gallery employer-shortlist-gallery" aria-label="Shortlisted caregivers preview">
+          <div className="saved-gallery employer-shortlist-gallery" aria-label="Shortlisted helpers preview">
             {savedCaregivers.map((caregiver) => (
               <CaregiverCard
                 agencyId={caregiver.agencyId}
@@ -104,13 +107,14 @@ export function UserProfilePage() {
                 key={caregiver.id}
                 matchPercent={caregiver.matchPercent}
                 name={caregiver.name}
+                secondaryText={caregiver.note}
                 summary={caregiver.summary}
                 traits={caregiver.traits}
               />
             ))}
           </div>
           {savedCaregivers.length === 0 ? (
-            <p className="workspace-empty-copy">Shortlisted caregivers will appear here.</p>
+            <p className="workspace-empty-copy">Shortlisted helpers will appear here.</p>
           ) : null}
         </section>
       )}

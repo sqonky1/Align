@@ -13,6 +13,7 @@ type CareProfileCardProps = {
   variant?: "default" | "anchor"
   contextLabel?: string
   interactive?: boolean
+  showGlyph?: boolean
 }
 
 export function CareProfileCard({
@@ -25,6 +26,7 @@ export function CareProfileCard({
   variant = "default",
   contextLabel,
   interactive = true,
+  showGlyph = true,
 }: CareProfileCardProps) {
   const resolvedContextLabel = contextLabel ?? "Matching for profile"
 
@@ -65,9 +67,11 @@ export function CareProfileCard({
       ) : null}
 
       <div className="profile-card-top">
-        <span className="profile-glyph" aria-hidden="true">
-          {profile.name.charAt(0)}
-        </span>
+        {showGlyph ? (
+          <span className="profile-glyph" aria-hidden="true">
+            {profile.name.charAt(0)}
+          </span>
+        ) : null}
 
         {showActions ? (
           <Link className="profile-card-action profile-card-action-match" to={getMatchSearchHref(profile.id)}>

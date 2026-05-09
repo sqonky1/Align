@@ -49,7 +49,7 @@ export function saveCaregiverOnboardingProfile(input: {
   const current = getStoredCaregiverOnboardingProfiles()
   const nextEntry: StoredCaregiverOnboardingProfile = {
     id: `cg-onboarding-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    full_name: input.values.full_name ?? "Unnamed caregiver",
+    full_name: input.values.full_name ?? "Unnamed helper",
     nationality: input.values.nationality,
     phone: input.values.phone,
     source_mode: input.source_mode,

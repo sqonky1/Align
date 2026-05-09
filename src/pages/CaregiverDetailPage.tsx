@@ -144,9 +144,9 @@ export function CaregiverDetailPage() {
     return (
       <section className="page-section">
         <div className="editor-canvas empty-editor-state">
-          <p className="panel-label">Caregiver detail</p>
-          <h2>Caregiver not found.</h2>
-          <p>The selected caregiver record is missing from the current mock dataset.</p>
+          <p className="panel-label">Helper detail</p>
+          <h2>Helper not found.</h2>
+          <p>The selected helper record is missing from the current mock dataset.</p>
           <Link className="button-primary" to="/search">
             Return to search
           </Link>
@@ -272,7 +272,7 @@ export function CaregiverDetailPage() {
                       <p className="result-summary">{caregiver.bio}</p>
 
                       {isMatchedMode ? null : (
-                        <div className="breakdown-chip-list" aria-label="Caregiver snapshot">
+                        <div className="breakdown-chip-list" aria-label="Helper snapshot">
                           {browseSnapshotPills.map((item) => (
                             <span className={`breakdown-chip breakdown-chip-${item.tone}`} key={item.label}>
                               {item.label}
@@ -355,7 +355,7 @@ export function CaregiverDetailPage() {
             </div>
 
             {!isPracticalOverviewMinimized ? (
-            <div className="detail-meta-master" aria-label="Caregiver overview" id="practical-overview-content">
+            <div className="detail-meta-master" aria-label="Helper overview" id="practical-overview-content">
               <article className="detail-meta-tile detail-meta-tile-core">
                 <div className="detail-meta-section-header">
                   <div className="detail-meta-heading-row">

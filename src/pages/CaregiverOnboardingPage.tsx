@@ -186,13 +186,13 @@ export function CaregiverOnboardingPage() {
       validation_issues: nextDraft.validation_issues,
     })
     clearStoredCaregiverOnboardingDraft()
-    setSubmitMessage("Caregiver profile saved.")
+    setSubmitMessage("Helper profile saved.")
     navigate("/", { replace: false })
   }
 
   function handleStartOver() {
     if (typeof window !== "undefined") {
-      const confirmed = window.confirm("Reset the caregiver onboarding draft?")
+      const confirmed = window.confirm("Reset the helper onboarding draft?")
       if (!confirmed) {
         return
       }
@@ -209,16 +209,16 @@ export function CaregiverOnboardingPage() {
   return (
     <section className="page-section caregiver-onboarding-page">
       <PageHeader
-        eyebrow="Caregiver onboarding"
-        title="Create one caregiver profile from manual entry or document auto-fill."
-        description="Both paths save into the same caregiver schema. You can switch modes at any point without losing draft data."
+        eyebrow="Helper onboarding"
+        title="Create one helper profile from manual entry or document auto-fill."
+        description="Both paths save into the same helper schema. You can switch modes at any point without losing draft data."
       />
 
       <section className="onboarding-mode-gate section-shell">
         <div className="section-header">
           <div>
             <p className="panel-label">Start here</p>
-            <h2>Choose how to build the caregiver profile</h2>
+            <h2>Choose how to build the helper profile</h2>
           </div>
           <button className="button-secondary" onClick={handleStartOver} type="button">
             Start over
@@ -254,7 +254,7 @@ export function CaregiverOnboardingPage() {
             <div className="section-header section-header-tight">
               <div>
                 <p className="panel-label">Assist</p>
-                <h2>{draft.mode === "autofill" ? "Upload caregiver documents" : "Upload documents to assist"}</h2>
+                <h2>{draft.mode === "autofill" ? "Upload helper documents" : "Upload documents to assist"}</h2>
               </div>
             </div>
 
@@ -328,7 +328,7 @@ export function CaregiverOnboardingPage() {
             <div className="section-header section-header-tight">
               <div>
                 <p className="panel-label">Shared profile</p>
-                <h2>Caregiver details</h2>
+                <h2>Helper details</h2>
               </div>
               <div className="review-legend">
                 <span className="review-chip review-chip-medium">Medium confidence</span>
@@ -557,7 +557,7 @@ export function CaregiverOnboardingPage() {
               Cancel
             </Link>
             <button className="button-primary" type="submit">
-              Save caregiver profile
+              Save helper profile
             </button>
           </div>
         </form>

@@ -180,7 +180,7 @@ async function generateMatchReasoning({
   const response = await openai.responses.create({
     model,
     instructions: [
-      "You explain a caregiver match for an employer reviewing a senior-care profile.",
+      "You explain a helper match for an employer reviewing a senior-care profile.",
       "Use only the provided JSON.",
       "Do not invent training, risks, medical claims, or experience.",
       "Keep the explanation to 2 or 3 sentences.",
@@ -597,7 +597,7 @@ async function extractCareProfileFromDocuments(extractedDocuments) {
     "Use only the supplied text.",
     "Map only to the exact schema fields provided.",
     "If a value is unknown, use an empty string for scalar fields and [] for arrays.",
-    "For name use the care recipient name, not the caregiver or doctor.",
+    "For name use the care recipient name, not the helper or doctor.",
     "For age return digits only as a string.",
     "For gender use male, female, or empty string.",
     "preferredLanguages can contain one or more languages or dialects mentioned in the documents.",

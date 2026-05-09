@@ -48,7 +48,7 @@ export const careProfiles: CareProfile[] = [
     medicationSupport: ["blood_glucose_monitoring"],
     householdContext: ["stairs_at_home", "lives_with_spouse"],
     riskNotes: "Needs help navigating stairs safely.",
-    additionalNotes: "Prefers calm, conversational caregiver.",
+    additionalNotes: "Prefers calm, conversational helper.",
     createdAt: "2026-05-08T00:00:00.000Z",
     updatedAt: "2026-05-08T00:00:00.000Z",
   },

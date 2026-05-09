@@ -284,7 +284,7 @@ function buildMatchSummary(
   }
 
   const lead = strengths.slice(0, 2).join(" and ")
-  return `${caregiver.name} stands out because the caregiver ${lead}. They bring ${caregiver.yearsOfExperience} years of experience for this care setup.`
+  return `${caregiver.name} stands out because the helper ${lead}. They bring ${caregiver.yearsOfExperience} years of experience for this care setup.`
 }
 
 function buildMatchAlert(profile: CareProfile, breakdown: MatchDimensionResult[]) {

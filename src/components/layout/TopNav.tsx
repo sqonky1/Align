@@ -12,7 +12,7 @@ export function TopNav() {
         <span className="brand-seal">A</span>
         <span className="brand-copy">
           <strong>Align</strong>
-          <span>Caregiver readiness and matching</span>
+          <span>Helper readiness and matching</span>
         </span>
       </NavLink>
 
@@ -62,4 +62,3 @@ function SearchIcon() {
     </svg>
   )
 }
-

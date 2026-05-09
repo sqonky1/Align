@@ -1,16 +1,16 @@
 # Align
 
-Align is an MVP for senior-care matching in an FDW support workflow. Employers create structured care profiles, run ranked caregiver matching, review fit details, shortlist candidates, and hand off to agencies for placement.
+Align is an MVP for senior-care matching in an FDW support workflow. Employers create structured care profiles, run ranked helper matching, review fit details, shortlist candidates, and hand off to agencies for placement.
 
 ## Product Features
 
-- Employer workspace (`/`) with care profiles and shortlisted caregivers
+- Employer workspace (`/`) with care profiles and shortlisted helpers
 - Care profile create/edit flow (`/profiles/new`, `/profiles/:profileId/edit`)
-- Care profile detail page (`/profiles/:profileId`) with structured care brief and suggested caregivers
+- Care profile detail page (`/profiles/:profileId`) with structured care brief and suggested helpers
 - Search (`/search`) in:
 - Browse mode (no profile context)
 - Matched mode (`?profile=<id>`) with ranked results and loading state
-- Caregiver detail (`/caregivers/:caregiverId`) with match breakdown, shortlist toggle, and agency handoff simulation
+- Helper detail (`/caregivers/:caregiverId`) with match breakdown, shortlist toggle, and agency handoff simulation
 - AI-generated practical match reasoning via backend API
 
 ## Matching Model
@@ -79,7 +79,7 @@ npm run build
 ## API (Current)
 
 - `GET /api/health` health check
-- `POST /api/match-reasoning` returns 2-3 sentence practical reasoning for a profile-caregiver match
+- `POST /api/match-reasoning` returns 2-3 sentence practical reasoning for a profile-helper match
 
 If `OPENAI_API_KEY` is missing, match-reasoning requests fail by design.
 

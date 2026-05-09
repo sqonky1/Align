@@ -84,14 +84,14 @@ export function SearchPage() {
               >
                 Match to care recipient
               </button>
-              <p className="toolbar-caption">{searchResults.length} caregivers available to browse</p>
+              <p className="toolbar-caption">{searchResults.length} helpers available to browse</p>
             </div>
           )}
 
           {isMatchLoading ? (
             <section className="match-loading-stage" aria-live="polite" aria-busy="true">
               <div className="section-header section-header-tight">
-                <h2>Finding caregiver matches...</h2>
+                <h2>Finding helper matches...</h2>
                 <p className="toolbar-caption">Ranking profiles based on selected care needs.</p>
               </div>
 
@@ -112,7 +112,7 @@ export function SearchPage() {
             </section>
           ) : isMatchedMode ? (
             <>
-              <section className="ranked-featured-list" aria-label="Top ranked caregivers">
+              <section className="ranked-featured-list" aria-label="Top ranked helpers">
                 {featuredResults.map((caregiver, index) => (
                   <CaregiverCard
                     agencyId={caregiver.agencyId}
@@ -131,7 +131,7 @@ export function SearchPage() {
 
               {remainingResults.length > 0 ? (
                 <section className="section-shell">
-                  <div className="matched-gallery-grid" aria-label="More ranked caregivers">
+                  <div className="matched-gallery-grid" aria-label="More ranked helpers">
                     {remainingResults.map((caregiver, index) => (
                       <CaregiverCard
                         agencyId={caregiver.agencyId}
@@ -151,7 +151,7 @@ export function SearchPage() {
               ) : null}
             </>
           ) : (
-            <div className="gallery-grid" aria-label="Caregiver search results">
+            <div className="gallery-grid" aria-label="Helper search results">
               {remainingResults.map((caregiver) => (
                 <CaregiverCard
                   agencyId={caregiver.agencyId}

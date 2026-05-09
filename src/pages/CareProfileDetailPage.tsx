@@ -174,13 +174,13 @@ export function CareProfileDetailPage() {
           <section className="section-shell">
             <div className="section-header section-header-tight">
               <div>
-                <h2 className="care-profile-section-title">Shortlisted Caregivers</h2>
+                <h2 className="care-profile-section-title">Shortlisted Helpers</h2>
               </div>
             </div>
 
             {savedCaregivers.length > 0 ? (
               <>
-                <div className="matched-gallery-grid" aria-label={`${profile.name} shortlisted caregivers`}>
+                <div className="matched-gallery-grid" aria-label={`${profile.name} shortlisted helpers`}>
                   {savedCaregivers.map((caregiver) => (
                     <CaregiverCard
                       agencyId={caregiver.agencyId}
@@ -199,7 +199,7 @@ export function CareProfileDetailPage() {
             ) : (
               <div className="detail-meta-card">
                 <p className="detail-supporting-copy">
-                  No caregivers have been shortlisted for this care recipient yet.
+                  No helpers have been shortlisted for this care recipient yet.
                 </p>
                 <div>
                   <Link className="button-primary" to={getMatchSearchHref(profile.id)}>
@@ -217,7 +217,7 @@ export function CareProfileDetailPage() {
               </div>
             </div>
 
-            <div className="matched-gallery-grid" aria-label={`${profile.name} suggested caregivers`}>
+            <div className="matched-gallery-grid" aria-label={`${profile.name} suggested helpers`}>
               {suggestedCaregivers.map((caregiver) => (
                 <CaregiverCard
                   agencyId={caregiver.agencyId}
