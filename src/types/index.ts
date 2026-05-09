@@ -89,6 +89,7 @@ export type SearchCaregiverPill = {
 export type SearchCaregiverCard = {
   id: string
   name: string
+  agencyId: string
   agency: string
   summary: string
   traits: SearchCaregiverPill[]
@@ -102,8 +103,10 @@ export type WorkspaceSavedCaregiverCard = {
   caregiverId: string
   careProfileId: string
   name: string
+  agencyId: string
   agency: string
   summary: string
+  matchPercent: number | null
   note: string
   traits: SearchCaregiverPill[]
 }

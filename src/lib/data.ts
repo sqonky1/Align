@@ -147,6 +147,14 @@ export function getCareProfileCardData(): CareProfileWorkspaceCard[] {
 
 export function getSavedCaregiverGalleryData(): WorkspaceSavedCaregiverCard[] {
   const profiles = getCareProfiles()
+  const rankedMatchesByProfileId = new Map(
+    profiles.map((profile) => [
+      profile.id,
+      new Map(
+        getRankedCaregiverMatches(profile, caregivers).map((result) => [result.caregiver.id, result]),
+      ),
+    ]),
+  )
 
   return getSavedCaregiverLinks().flatMap((saved) => {
     const caregiver = caregivers.find((entry) => entry.id === saved.caregiverId)
@@ -156,16 +164,20 @@ export function getSavedCaregiverGalleryData(): WorkspaceSavedCaregiverCard[] {
       return []
     }
 
+    const matchedResult = rankedMatchesByProfileId.get(profile.id)?.get(caregiver.id) ?? null
+
     return [
       {
         id: saved.id,
         caregiverId: caregiver.id,
         careProfileId: profile.id,
         name: caregiver.name,
+        agencyId: caregiver.agencyId,
         agency: caregiver.agencyName,
-        summary: caregiver.bio,
+        summary: matchedResult?.summary ?? caregiver.bio,
+        matchPercent: matchedResult?.matchPercent ?? null,
         note: `Saved for ${profile.name}`,
-        traits: buildCaregiverSnapshotPills(caregiver),
+        traits: matchedResult?.traits ?? buildCaregiverSnapshotPills(caregiver),
       },
     ]
   })
@@ -183,6 +195,7 @@ export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCareg
   return getRankedCaregiverMatches(profile, caregivers).map((result) => ({
     id: result.caregiver.id,
     name: result.caregiver.name,
+    agencyId: result.caregiver.agencyId,
     agency: result.caregiver.agencyName,
     matchPercent: result.matchPercent,
     summary: result.summary,
@@ -198,6 +211,7 @@ export function getBrowseCaregiverGalleryData(): SearchCaregiverCard[] {
   return caregivers.map((caregiver) => ({
     id: caregiver.id,
     name: caregiver.name,
+    agencyId: caregiver.agencyId,
     agency: caregiver.agencyName,
     matchPercent: null,
     summary: caregiver.bio,

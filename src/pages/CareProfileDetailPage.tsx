@@ -89,7 +89,7 @@ export function CareProfileDetailPage() {
         <div className="detail-main">
           <CareProfileCard
             className="detail-profile-card"
-            contextLabel="Active care recipient"
+            contextLabel=""
             interactive={false}
             profile={profile}
             showActions
@@ -99,8 +99,7 @@ export function CareProfileDetailPage() {
           <section className="section-shell">
             <div className="section-header section-header-tight">
               <div>
-                <p className="panel-label">Care brief</p>
-                <h2>Structured Needs Overview</h2>
+                <h2 className="care-profile-section-title">Care brief</h2>
               </div>
             </div>
 
@@ -152,20 +151,19 @@ export function CareProfileDetailPage() {
           <section className="section-shell">
             <div className="section-header section-header-tight">
               <div>
-                <p className="panel-label">Notes</p>
-                <h2>Context for matching and handoff</h2>
+                <h2 className="care-profile-section-title">Additional Context</h2>
               </div>
             </div>
 
             <div className="detail-meta-grid">
               <article className="detail-meta-card">
-                <p className="panel-label">Risk notes</p>
+                <p className="detail-meta-card-title">Risk notes</p>
                 <p className="detail-supporting-copy">
                   {profile.riskNotes || "No risk notes added"}
                 </p>
               </article>
               <article className="detail-meta-card">
-                <p className="panel-label">Additional notes</p>
+                <p className="detail-meta-card-title">Additional notes</p>
                 <p className="detail-supporting-copy">
                   {profile.additionalNotes || "No additional notes added"}
                 </p>
@@ -176,8 +174,7 @@ export function CareProfileDetailPage() {
           <section className="section-shell">
             <div className="section-header section-header-tight">
               <div>
-                <p className="panel-label">Shortlist</p>
-                <h2>Shortlisted caregivers for {profile.name}</h2>
+                <h2 className="care-profile-section-title">Shortlisted Caregivers</h2>
               </div>
             </div>
 
@@ -186,12 +183,13 @@ export function CareProfileDetailPage() {
                 <div className="matched-gallery-grid" aria-label={`${profile.name} shortlisted caregivers`}>
                   {savedCaregivers.map((caregiver) => (
                     <CaregiverCard
+                      agencyId={caregiver.agencyId}
                       agency={caregiver.agency}
-                      compact
+                      className="matched-gallery-card"
                       href={`/caregivers/${caregiver.caregiverId}?profile=${profile.id}`}
                       key={caregiver.id}
+                      matchPercent={caregiver.matchPercent}
                       name={caregiver.name}
-                      secondaryText="Shortlisted caregiver"
                       summary={caregiver.summary}
                       traits={caregiver.traits}
                     />
@@ -215,16 +213,16 @@ export function CareProfileDetailPage() {
           <section className="section-shell">
             <div className="section-header section-header-tight">
               <div>
-                <p className="panel-label">Next options</p>
-                <h2>Suggested for {profile.name}</h2>
+                <h2 className="care-profile-section-title">Suggested for {profile.name}</h2>
               </div>
             </div>
 
             <div className="matched-gallery-grid" aria-label={`${profile.name} suggested caregivers`}>
               {suggestedCaregivers.map((caregiver) => (
                 <CaregiverCard
+                  agencyId={caregiver.agencyId}
                   agency={caregiver.agency}
-                  compact
+                  className="matched-gallery-card"
                   href={`/caregivers/${caregiver.id}?profile=${profile.id}`}
                   key={caregiver.id}
                   matchPercent={caregiver.matchPercent}

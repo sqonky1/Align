@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { Link, useParams, useSearchParams } from "react-router-dom"
+import heartMascot from "../assets/heart.png"
 import { CareProfileCard } from "../components/cards/CareProfileCard"
 import {
   formatDisplayLabel,
@@ -11,13 +12,12 @@ import {
   saveCaregiverForProfile,
 } from "../lib/data"
 import {
-  getCaregiverLanguageDisplay,
   getRankedCaregiverMatches,
   scoreCaregiverMatch,
   type MatchDimensionResult,
 } from "../lib/matching"
 import { buildCaregiverSnapshotPills } from "../lib/caregiverPills"
-import { getRankAccentClass } from "../lib/rankAccents"
+import { getAgencyLogoById } from "../lib/agencyLogos"
 import type { CareProfile } from "../types"
 
 type DetailListGroup = {
@@ -29,7 +29,6 @@ type DetailListGroup = {
 
 export function CaregiverDetailPage() {
   const { caregiverId } = useParams()
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const activeProfileId = searchParams.get("profile")
   const caregiver = caregiverId ? getCaregiverById(caregiverId) : null
@@ -44,12 +43,11 @@ export function CaregiverDetailPage() {
       ? rankedMatches[rankedMatchIndex] ??
         scoreCaregiverMatch(activeProfile, caregiver)
       : null
-  const matchRank = rankedMatchIndex >= 0 ? rankedMatchIndex + 1 : null
   const isMatchedMode = Boolean(caregiver && activeProfile && matchResult)
-  const activeRankClass =
-    matchRank && matchRank <= 3 ? getRankAccentClass(matchRank - 1) : undefined
   const [isHandoffConfirmOpen, setIsHandoffConfirmOpen] = useState(false)
   const [isHandoffSimulationOpen, setIsHandoffSimulationOpen] = useState(false)
+  const [isPracticalOverviewMinimized, setIsPracticalOverviewMinimized] = useState(false)
+  const [isFitBreakdownMinimized, setIsFitBreakdownMinimized] = useState(false)
   const [savedFlag, setSavedFlag] = useState(
     caregiver && activeProfileId
       ? isCaregiverSavedForProfile(activeProfileId, caregiver.id)
@@ -94,6 +92,7 @@ export function CaregiverDetailPage() {
       </section>
     )
   }
+  const agencyLogo = getAgencyLogoById(caregiver.agencyId)
 
   const capabilitySections = [
     {
@@ -144,133 +143,144 @@ export function CaregiverDetailPage() {
     { label: "Nationality", value: caregiver.nationality },
     { label: "Experience", value: `${caregiver.yearsOfExperience} years` },
   ]
+  const aiReasoningCopy =
+    isMatchedMode && matchResult
+      ? matchResult.alert
+        ? `${matchResult.summary} ${matchResult.alert}`
+        : matchResult.summary
+      : ""
 
   return (
     <section className="page-section caregiver-detail-page">
-      <div className="detail-top-actions">
-        <button className="button-secondary" onClick={() => navigate(-1)} type="button">
-          Back to search
-        </button>
-        <button
-          className="button-primary detail-handoff-button"
-          onClick={() => setIsHandoffConfirmOpen(true)}
-          type="button"
-        >
-          Agency handoff
-        </button>
-      </div>
-
       <section className="detail-stage">
         <div className="detail-main">
-          <div className="detail-primary-stack">
-            <div className="detail-context-row">
-              {isMatchedMode && activeProfile ? (
-                <CareProfileCard
-                  className="detail-profile-context-card"
-                  contextLabel="Reviewing for"
-                  href={`/profiles/${activeProfile.id}`}
-                  profile={{
-                    id: activeProfile.id,
-                    name: activeProfile.name,
-                    age: activeProfile.age,
-                    gender: activeProfile.gender,
-                    preferredLanguage: activeProfile.preferredLanguage,
-                  }}
-                  showActions={false}
-                  variant="anchor"
-                />
-              ) : null}
-            </div>
-
-            <section
-              className={`caregiver-card caregiver-card-ranked detail-hero ${
-                activeRankClass ?? ""
-              }`.trim()}
-            >
-              <div className="detail-hero-body">
-                <div className="detail-portrait">
-                  <div className="portrait-frame">
-                    <span>{caregiver.name.charAt(0)}</span>
-                  </div>
-                </div>
-
-                <div className="caregiver-card-copy detail-hero-content">
-                  <div className="detail-hero-header">
-                    <div className="detail-hero-heading">
-                      <div>
-                        <p className="panel-label">
-                          {isMatchedMode ? "Matched caregiver" : "Caregiver profile"}
-                        </p>
-                        <div className="detail-hero-name-row">
-                          <h2>{caregiver.name}</h2>
-                          {isMatchedMode && matchRank ? (
-                            <span className="rank-token detail-hero-rank-token">#{matchRank}</span>
-                          ) : null}
-                        </div>
-                        <p className="agency-line">{caregiver.agencyName}</p>
-                      </div>
+          <div className="detail-match-overview">
+            <div className="detail-primary-stack">
+              <section className={`detail-comparison-shell ${isMatchedMode ? "detail-comparison-shell-matched" : ""}`}>
+                <section className="caregiver-card detail-hero">
+                <div className="detail-hero-body">
+                  <div className="detail-portrait">
+                    <div className="portrait-frame">
+                      {agencyLogo ? (
+                        <img alt={`${caregiver.agencyName} logo`} src={agencyLogo} />
+                      ) : (
+                        <span>{caregiver.name.charAt(0)}</span>
+                      )}
                     </div>
+                  </div>
 
-                    {isMatchedMode && matchResult ? (
+                  <div className="caregiver-card-copy detail-hero-content">
+                    <div className="detail-hero-header">
+                      <div className="detail-hero-heading">
+                        <div>
+                          <div className="detail-hero-name-row">
+                            <h2>{caregiver.name}</h2>
+                          </div>
+                          <p className="agency-line">{caregiver.agencyName}</p>
+                        </div>
+                      </div>
+
                       <div className="detail-hero-actions">
-                        <span className="score-token">{matchResult.matchPercent}% match</span>
                         <button
-                          className={`button-secondary shortlist-toggle ${savedFlag ? "shortlist-toggle-active" : ""}`}
-                          onClick={handleToggleSave}
+                          className="button-primary detail-handoff-button detail-handoff-button-inline"
+                          onClick={() => setIsHandoffConfirmOpen(true)}
                           type="button"
                         >
-                          {savedFlag ? "Saved to shortlist" : "Save to shortlist"}
+                          Agency handoff
                         </button>
+                        {isMatchedMode ? (
+                          <button
+                            aria-label={savedFlag ? "Remove from shortlist" : "Save to shortlist"}
+                            className={`detail-shortlist-star ${savedFlag ? "detail-shortlist-star-active" : ""}`}
+                            onClick={handleToggleSave}
+                            title={savedFlag ? "Saved to shortlist" : "Save to shortlist"}
+                            type="button"
+                          >
+                            <span aria-hidden="true">{savedFlag ? "★" : "☆"}</span>
+                          </button>
+                        ) : (
+                          <span className="detail-status-chip">
+                            {caregiver.availability === "available" ? "Available now" : "Shortlist only"}
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <span className="detail-status-chip">
-                        {caregiver.availability === "available" ? "Available now" : "Shortlist only"}
-                      </span>
+                    </div>
+
+                    <p className="result-summary">{caregiver.bio}</p>
+
+                    {isMatchedMode ? null : (
+                      <div className="breakdown-chip-list" aria-label="Caregiver snapshot">
+                        {browseSnapshotPills.map((item) => (
+                          <span className={`breakdown-chip breakdown-chip-${item.tone}`} key={item.label}>
+                            {item.label}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
-
-                  <p className="result-summary">{caregiver.bio}</p>
-
-                  {isMatchedMode && matchResult ? (
-                    <>
-                      <p className="detail-supporting-copy">{matchResult.summary}</p>
-                      {matchResult.alert ? <p className="fit-alert">{matchResult.alert}</p> : null}
-                      <div className="breakdown-chip-list" aria-label={`${caregiver.name} fit summary`}>
-                        {matchResult.breakdown
-                          .filter((item) => item.maxScore > 0)
-                          .map((item) => (
-                            <span
-                              className={`breakdown-chip ${getBreakdownStatusClass(item)}`}
-                              key={item.key}
-                            >
-                              {item.label}: {getBreakdownChipCopy(item, caregiver.languages, activeProfile?.preferredLanguage)}
-                            </span>
-                          ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="breakdown-chip-list" aria-label="Caregiver snapshot">
-                      {browseSnapshotPills.map((item) => (
-                        <span className={`breakdown-chip breakdown-chip-${item.tone}`} key={item.label}>
-                          {item.label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
-            </section>
+                </section>
+
+                {isMatchedMode && activeProfile ? (
+                  <CareProfileCard
+                    className="detail-profile-context-card"
+                    contextLabel="Reviewing for"
+                    href={`/profiles/${activeProfile.id}`}
+                    profile={{
+                      id: activeProfile.id,
+                      name: activeProfile.name,
+                      age: activeProfile.age,
+                      gender: activeProfile.gender,
+                      preferredLanguage: activeProfile.preferredLanguage,
+                    }}
+                    showActions={false}
+                    variant="anchor"
+                  />
+                ) : null}
+              </section>
+            </div>
+
+            {isMatchedMode && matchResult ? (
+              <aside className="detail-radar-panel" aria-label="Skills fit chart">
+                <p className="detail-fit-summary-score">Match: {matchResult.matchPercent}%</p>
+                <DetailSkillsFitRadar breakdown={matchResult.breakdown} />
+              </aside>
+            ) : null}
           </div>
+
+          {isMatchedMode && matchResult ? (
+            <div className="detail-ai-reasoning-row" aria-label="AI reasoning">
+              <div className="detail-ai-avatar">
+                <img alt="Heart mascot" src={heartMascot} />
+              </div>
+              <section className="detail-ai-reasoning">
+                <div className="detail-ai-reasoning-header">
+                  <p className="panel-label">AI reasoning</p>
+                  <span className="detail-ai-match-badge">{matchResult.matchPercent}% match</span>
+                </div>
+                <p className="detail-ai-reasoning-copy">{aiReasoningCopy}</p>
+              </section>
+            </div>
+          ) : null}
 
           <section className="section-shell">
             <div className="section-header section-header-tight">
-              <div>
-                <p className="panel-label">Profile snapshot</p>
-                <h2>Practical overview</h2>
-              </div>
+              <button
+                aria-controls="practical-overview-content"
+                aria-expanded={!isPracticalOverviewMinimized}
+                className="section-toggle-heading"
+                onClick={() => setIsPracticalOverviewMinimized((value) => !value)}
+                type="button"
+              >
+                <span aria-hidden="true" className="section-toggle-glyph">
+                  {isPracticalOverviewMinimized ? "+" : "-"}
+                </span>
+                <span>Practical Overview</span>
+              </button>
             </div>
 
-            <div className="detail-meta-master" aria-label="Caregiver overview">
+            {!isPracticalOverviewMinimized ? (
+            <div className="detail-meta-master" aria-label="Caregiver overview" id="practical-overview-content">
               <article className="detail-meta-tile detail-meta-tile-core">
                 <div className="detail-meta-section-header">
                   <div className="detail-meta-heading-row">
@@ -312,18 +322,28 @@ export function CaregiverDetailPage() {
                 </article>
               ))}
             </div>
+            ) : null}
           </section>
 
           {isMatchedMode && matchResult && activeProfile ? (
             <section className="section-shell">
               <div className="section-header section-header-tight">
-                <div>
-                  <p className="panel-label">Fit breakdown</p>
-                  <h2>How this caregiver lines up with {activeProfile.name}</h2>
-                </div>
+                <button
+                  aria-controls="fit-breakdown-content"
+                  aria-expanded={!isFitBreakdownMinimized}
+                  className="section-toggle-heading"
+                  onClick={() => setIsFitBreakdownMinimized((value) => !value)}
+                  type="button"
+                >
+                  <span aria-hidden="true" className="section-toggle-glyph">
+                    {isFitBreakdownMinimized ? "+" : "-"}
+                  </span>
+                  <span>Fit Breakdown</span>
+                </button>
               </div>
 
-              <div className="detail-fit-grid" aria-label="Detailed fit breakdown">
+              {!isFitBreakdownMinimized ? (
+              <div className="detail-fit-grid" aria-label="Detailed fit breakdown" id="fit-breakdown-content">
                 {matchResult.breakdown
                   .filter((item) => item.maxScore > 0)
                   .map((item) => (
@@ -341,42 +361,64 @@ export function CaregiverDetailPage() {
                       </div>
 
                       <div className="detail-fit-lists">
-                        {getDetailListGroups(item, activeProfile).map((group, index) => (
-                          <div className="detail-fit-list" key={`${item.key}-${index}`}>
-                            {group.label ? <span>{group.label}</span> : null}
-                            {item.key === "experience" ? (
-                              <div className="detail-fit-rows">
-                                {group.values.map((value) => (
-                                  <p className="detail-fit-row" key={value}>
-                                    {value}
-                                  </p>
-                                ))}
-                              </div>
-                            ) : group.values.length > 0 ? (
-                              <div className="trait-chips">
-                                {group.values.map((value) => (
+                        {item.key === "experience" ? (
+                          <div className="detail-fit-list">
+                            <div className="trait-chips">
+                              {(() => {
+                                const requiredYears = getTargetExperienceYearsForProfile(activeProfile)
+                                const currentYears = caregiver.yearsOfExperience
+                                const hasEnoughExperience = currentYears >= requiredYears
+                                return (
                                   <span
                                     className={`trait-chip detail-fit-pill ${
-                                      group.tone === "gap" ? "detail-fit-pill-gap" : "detail-fit-pill-match"
+                                      hasEnoughExperience
+                                        ? "detail-fit-pill-match"
+                                        : "detail-fit-pill-danger"
                                     }`}
-                                    key={value}
                                   >
                                     <span aria-hidden="true" className="detail-fit-pill-icon">
-                                      {group.tone === "gap" ? "+" : "✓"}
+                                      {hasEnoughExperience ? "✓" : "+"}
                                     </span>
-                                    {toSentenceCase(value)}
+                                    {currentYears} years
                                   </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="detail-empty-copy">{group.emptyLabel}</p>
-                            )}
+                                )
+                              })()}
+                            </div>
+                            <p className="detail-fit-footnote">
+                              Required experience: {getTargetExperienceYearsForProfile(activeProfile)} years.
+                            </p>
                           </div>
-                        ))}
+                        ) : (
+                          getDetailListGroups(item, activeProfile).map((group, index) => (
+                            <div className="detail-fit-list" key={`${item.key}-${index}`}>
+                              {group.label ? <span>{group.label}</span> : null}
+                              {group.values.length > 0 ? (
+                                <div className="trait-chips">
+                                  {group.values.map((value) => (
+                                    <span
+                                      className={`trait-chip detail-fit-pill ${
+                                        group.tone === "gap" ? "detail-fit-pill-gap" : "detail-fit-pill-match"
+                                      }`}
+                                      key={value}
+                                    >
+                                      <span aria-hidden="true" className="detail-fit-pill-icon">
+                                        {group.tone === "gap" ? "+" : "✓"}
+                                      </span>
+                                      {toSentenceCase(value)}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="detail-empty-copy">{group.emptyLabel}</p>
+                              )}
+                            </div>
+                          ))
+                        )}
                       </div>
                     </article>
                   ))}
               </div>
+              ) : null}
             </section>
           ) : null}
         </div>
@@ -547,6 +589,90 @@ function SectionIcon({
   )
 }
 
+function DetailSkillsFitRadar({ breakdown }: { breakdown: MatchDimensionResult[] }) {
+  const chartItems = breakdown.filter((item) => item.maxScore > 0).slice(0, 6)
+
+  if (chartItems.length < 3) {
+    return null
+  }
+
+  const size = 320
+  const center = size / 2
+  const radius = 88
+  const labelRadius = 124
+  const levels = [0.25, 0.5, 0.75, 1]
+  const labelMap: Record<MatchDimensionResult["key"], string> = {
+    language: "Language",
+    conditions: "Conditions",
+    dailyCareTasks: "Daily tasks",
+    mobilitySupport: "Mobility",
+    medicationSupport: "Medication",
+    experience: "Experience",
+  }
+
+  const pointFor = (axisIndex: number, distanceRatio: number, axisRadius = radius) => {
+    const angle = (Math.PI * 2 * axisIndex) / chartItems.length - Math.PI / 2
+    const pointRadius = axisRadius * distanceRatio
+    const x = center + Math.cos(angle) * pointRadius
+    const y = center + Math.sin(angle) * pointRadius
+    return { x, y }
+  }
+
+  const polygonPoints = chartItems
+    .map((item, axisIndex) => {
+      const point = pointFor(
+        axisIndex,
+        Math.max(0, Math.min(1, item.maxScore > 0 ? item.score / item.maxScore : 0)),
+      )
+      return `${point.x.toFixed(2)},${point.y.toFixed(2)}`
+    })
+    .join(" ")
+
+  return (
+    <figure aria-label="Skills fit radar chart" className="skills-radar detail-skills-radar">
+      <svg aria-hidden="true" viewBox={`0 0 ${size} ${size}`}>
+        {levels.map((level) => (
+          <polygon
+            className="skills-radar-ring"
+            key={level}
+            points={chartItems
+              .map((_, axisIndex) => {
+                const point = pointFor(axisIndex, level)
+                return `${point.x.toFixed(2)},${point.y.toFixed(2)}`
+              })
+              .join(" ")}
+          />
+        ))}
+        {chartItems.map((item, axisIndex) => {
+          const axisPoint = pointFor(axisIndex, 1)
+          const valuePoint = pointFor(
+            axisIndex,
+            Math.max(0, Math.min(1, item.maxScore > 0 ? item.score / item.maxScore : 0)),
+          )
+          const labelPoint = pointFor(axisIndex, 1, labelRadius)
+
+          return (
+            <g key={item.key}>
+              <line
+                className="skills-radar-axis"
+                x1={center}
+                x2={axisPoint.x}
+                y1={center}
+                y2={axisPoint.y}
+              />
+              <circle className="skills-radar-point" cx={valuePoint.x} cy={valuePoint.y} r={4.8} />
+              <text className="skills-radar-label" x={labelPoint.x} y={labelPoint.y}>
+                {labelMap[item.key]}
+              </text>
+            </g>
+          )
+        })}
+        <polygon className="skills-radar-shape" points={polygonPoints} />
+      </svg>
+    </figure>
+  )
+}
+
 function getBreakdownStatusClass(item: MatchDimensionResult) {
   if (item.maxScore > 0 && item.score === item.maxScore) {
     return "breakdown-chip-strong"
@@ -569,23 +695,6 @@ function getDetailFitCardClass(item: MatchDimensionResult) {
   }
 
   return "detail-fit-card-partial"
-}
-
-function getBreakdownChipCopy(
-  item: MatchDimensionResult,
-  caregiverLanguages: string[],
-  preferredLanguage?: string,
-) {
-  if (item.key === "language") {
-    return getCaregiverLanguageDisplay(caregiverLanguages, preferredLanguage)
-  }
-
-  if (item.key === "experience") {
-    return item.matchedValues[0] ?? "Experience not available"
-  }
-
-  const requestedCount = item.matchedValues.length + item.missingValues.length
-  return `${item.matchedValues.length}/${requestedCount}`
 }
 
 function getCoverageRatioCopy(item: MatchDimensionResult) {

@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom"
+import { getAgencyLogoById } from "../../lib/agencyLogos"
 import type { SearchCaregiverPill } from "../../types"
 
 type CaregiverCardProps = {
   href: string
   name: string
+  agencyId: string
   agency: string
   summary?: string
   traits: Array<string | SearchCaregiverPill>
@@ -17,6 +19,7 @@ type CaregiverCardProps = {
 export function CaregiverCard({
   href,
   name,
+  agencyId,
   agency,
   summary,
   traits,
@@ -26,21 +29,23 @@ export function CaregiverCard({
   compact = false,
   className,
 }: CaregiverCardProps) {
+  const agencyLogo = getAgencyLogoById(agencyId)
+
   return (
     <Link
-      className={`caregiver-card caregiver-card-link ${compact ? "caregiver-card-compact" : ""} ${className ?? ""}`.trim()}
+      className={`caregiver-card caregiver-card-link ${compact ? "caregiver-card-compact" : ""} ${matchPercent !== null ? "caregiver-card-has-score" : ""} ${className ?? ""}`.trim()}
       to={href}
     >
       {cornerText ? <span className="card-corner-note">{cornerText}</span> : null}
 
       <div className="portrait-block">
         <div className="portrait-frame">
-          <span>{name.charAt(0)}</span>
+          {agencyLogo ? <img alt={`${agency} logo`} src={agencyLogo} /> : <span>{name.charAt(0)}</span>}
         </div>
         {matchPercent !== null ? (
           <span className="score-token">
             <span>{matchPercent}%</span>
-            <span>match</span>
+            <span>{" match"}</span>
           </span>
         ) : null}
       </div>

@@ -78,7 +78,7 @@ export function CareProfileCard({
       </div>
 
       <div className="profile-card-copy">
-        <p className="profile-card-context-label">{resolvedContextLabel}</p>
+        {resolvedContextLabel ? <p className="profile-card-context-label">{resolvedContextLabel}</p> : null}
         <h3>{profile.name}</h3>
         <p>
           {profile.age} years old · {formatDisplayLabel(profile.gender)} ·{" "}

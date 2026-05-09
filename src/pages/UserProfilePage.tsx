@@ -53,17 +53,19 @@ export function UserProfilePage() {
 
       <section className="section-shell">
         <div className="section-header">
-          <h2>Shortlisted caregivers</h2>
+          <h2>Shortlisted Caregivers</h2>
         </div>
 
-        <div className="saved-gallery" aria-label="Shortlisted caregivers preview">
+        <div className="saved-gallery employer-shortlist-gallery" aria-label="Shortlisted caregivers preview">
           {savedCaregivers.map((caregiver) => (
             <CaregiverCard
+              agencyId={caregiver.agencyId}
               agency={caregiver.agency}
+              className="matched-gallery-card"
               href={`/caregivers/${caregiver.caregiverId}?profile=${caregiver.careProfileId}`}
               key={caregiver.id}
+              matchPercent={caregiver.matchPercent}
               name={caregiver.name}
-              secondaryText={caregiver.note}
               summary={caregiver.summary}
               traits={caregiver.traits}
             />
