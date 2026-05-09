@@ -1,4 +1,8 @@
 import type { CareProfileFormValues } from "../../types"
+import {
+  filterAllowedCareProfileValues,
+  type CareProfileArrayFieldName,
+} from "../../lib/careProfiles"
 import type { CareProfileExtractionResponse } from "./api"
 
 const HIGH_CONFIDENCE_THRESHOLD = 0.85
@@ -96,7 +100,8 @@ function mergeArrayField(
     | "mobilitySupport"
     | "medicationSupport"
     | "householdContext"
-  >,
+  > &
+    CareProfileArrayFieldName,
   extraction: CareProfileExtractionResponse,
   userEditedFields: Set<keyof CareProfileFormValues>,
 ) {
@@ -105,10 +110,12 @@ function mergeArrayField(
   }
 
   const review = extraction.fieldReviews.find((entry) => entry.field === field)
-  const highConfidenceSuggestions =
+  const highConfidenceSuggestions = filterAllowedCareProfileValues(
+    field,
     review?.suggestedValues
       .filter((entry) => entry.confidence >= HIGH_CONFIDENCE_THRESHOLD)
-      .map((entry) => entry.value) ?? []
+      .map((entry) => entry.value) ?? [],
+  )
 
   if (highConfidenceSuggestions.length > 0) {
     nextValues[field] = dedupeTextValues([...nextValues[field], ...highConfidenceSuggestions])
@@ -116,12 +123,12 @@ function mergeArrayField(
   }
 
   if (nextValues[field].length === 0) {
-    nextValues[field] = extraction.values[field]
+    nextValues[field] = filterAllowedCareProfileValues(field, extraction.values[field])
     return
   }
 
   if (review && review.confidence >= HIGH_CONFIDENCE_THRESHOLD) {
-    nextValues[field] = extraction.values[field]
+    nextValues[field] = filterAllowedCareProfileValues(field, extraction.values[field])
   }
 }
 

@@ -3,11 +3,14 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { PageHeader } from "../components/layout/PageHeader"
 import {
   buildCareProfileFromForm,
+  type CareProfileArrayFieldName,
   type CareProfileOption,
   conditionOptions,
   dailyCareTaskOptions,
+  filterAllowedCareProfileValues,
   getEmptyCareProfileFormValues,
   householdContextOptions,
+  isAllowedCareProfileValue,
   languageOptions,
   medicationSupportOptions,
   mobilitySupportOptions,
@@ -146,12 +149,12 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
     }))
   }
 
-  function handleArrayToggle(field: ArrayFieldName, value: string) {
+  function handleArrayToggle(field: CareProfileArrayFieldName, value: string) {
     markUserEdited(field)
     setFormValues((current) => {
       const normalizedValue = value.trim()
 
-      if (!normalizedValue) {
+      if (!normalizedValue || !isAllowedCareProfileValue(field, normalizedValue)) {
         return current
       }
 
@@ -167,12 +170,12 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
     })
   }
 
-  function acceptSuggestedValue(field: ArrayFieldName, value: string) {
+  function acceptSuggestedValue(field: CareProfileArrayFieldName, value: string) {
     dismissSuggestion(field, value)
     handleArrayToggle(field, value)
   }
 
-  function rejectSuggestedValue(field: ArrayFieldName, value: string) {
+  function rejectSuggestedValue(field: CareProfileArrayFieldName, value: string) {
     markUserEdited(field)
     dismissSuggestion(field, value)
   }
@@ -186,6 +189,10 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
 
     markUserEdited("preferredLanguages")
     setFormValues((current) => {
+      if (!isAllowedCareProfileValue("preferredLanguages", normalizedValue)) {
+        return current
+      }
+
       const exists = current.preferredLanguages.includes(normalizedValue)
       const nextPreferredLanguages = exists
         ? current.preferredLanguages.filter((entry) => entry !== normalizedValue)
@@ -248,7 +255,7 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!canSave) {
@@ -256,7 +263,7 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
     }
 
     const profile = buildCareProfileFromForm(formValues, existingProfile)
-    saveCareProfile(profile)
+    await saveCareProfile(profile)
     navigate("/")
   }
 
@@ -535,24 +542,16 @@ function CareProfileEditor({ existingProfile, isEditing }: CareProfileEditorProp
   )
 }
 
-type ArrayFieldName =
-  | "preferredLanguages"
-  | "conditions"
-  | "dailyCareTasks"
-  | "mobilitySupport"
-  | "medicationSupport"
-  | "householdContext"
-
 type FlexibleOptionGroupProps = {
-  field: ArrayFieldName
+  field: CareProfileArrayFieldName
   label: string
   options: CareProfileOption[]
   review?: CareProfileFieldReview
   selectedValues: string[]
   dismissedSuggestions: Set<SuggestionKey>
-  onAcceptSuggestion: (field: ArrayFieldName, value: string) => void
-  onRejectSuggestion: (field: ArrayFieldName, value: string) => void
-  onToggle: (field: ArrayFieldName, value: string) => void
+  onAcceptSuggestion: (field: CareProfileArrayFieldName, value: string) => void
+  onRejectSuggestion: (field: CareProfileArrayFieldName, value: string) => void
+  onToggle: (field: CareProfileArrayFieldName, value: string) => void
 }
 
 function FlexibleOptionGroup({
@@ -576,7 +575,6 @@ function FlexibleOptionGroup({
 
     return option.label.toLowerCase().includes(normalizedQuery.toLowerCase())
   })
-  const canCreate = normalizedQuery.length > 0 && !selectedValues.includes(normalizedQuery)
   const suggestionValues = getPendingSuggestions(field, review, selectedValues, dismissedSuggestions)
 
   function handleAdd(value: string) {
@@ -603,26 +601,21 @@ function FlexibleOptionGroup({
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && normalizedQuery.length > 0) {
+            if (event.key === "Enter" && filteredOptions.length > 0) {
               event.preventDefault()
-              handleAdd(normalizedQuery)
+              handleAdd(filteredOptions[0].value)
             }
           }}
-          placeholder="Type to search or create"
+          placeholder="Search options"
           value={query}
         />
-        {isOpen && (filteredOptions.length > 0 || canCreate) ? (
+        {isOpen && filteredOptions.length > 0 ? (
           <div className="option-search-results">
             {filteredOptions.slice(0, 6).map((option) => (
               <button className="option-result" key={option.value} onClick={() => handleAdd(option.value)} type="button">
                 {option.label}
               </button>
             ))}
-            {canCreate ? (
-              <button className="option-result option-result-create" onClick={() => handleAdd(normalizedQuery)} type="button">
-                Add “{normalizedQuery}”
-              </button>
-            ) : null}
           </div>
         ) : null}
       </div>
@@ -666,12 +659,18 @@ function getFieldClassName() {
 }
 
 function getPendingSuggestions(
-  field: ArrayFieldName,
+  field: CareProfileArrayFieldName,
   review: CareProfileFieldReview | undefined,
   selectedValues: string[],
   dismissedSuggestions: Set<SuggestionKey>,
 ) {
-  return (review?.suggestedValues ?? []).filter(
+  return filterAllowedCareProfileValues(
+    field,
+    (review?.suggestedValues ?? []).map((suggestion) => suggestion.value),
+  )
+    .map((value) => (review?.suggestedValues ?? []).find((suggestion) => suggestion.value === value))
+    .filter((suggestion): suggestion is CareProfileSuggestedValue => Boolean(suggestion))
+    .filter(
     (suggestion) =>
       suggestion.confidence < HIGH_CONFIDENCE_THRESHOLD &&
       !selectedValues.includes(suggestion.value) &&
@@ -689,10 +688,10 @@ function SuggestionPill({
   onAccept,
   onReject,
 }: {
-  field: ArrayFieldName
+  field: CareProfileArrayFieldName
   suggestion: CareProfileSuggestedValue
-  onAccept: (field: ArrayFieldName, value: string) => void
-  onReject: (field: ArrayFieldName, value: string) => void
+  onAccept: (field: CareProfileArrayFieldName, value: string) => void
+  onReject: (field: CareProfileArrayFieldName, value: string) => void
 }) {
   return (
     <div className="care-intake-suggestion-pill">

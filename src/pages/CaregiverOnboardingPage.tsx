@@ -169,7 +169,7 @@ export function CaregiverOnboardingPage() {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextDraft = revalidateDraft(draft)
     setDraft(nextDraft)
@@ -179,7 +179,7 @@ export function CaregiverOnboardingPage() {
       return
     }
 
-    saveCaregiverOnboardingProfile({
+    await saveCaregiverOnboardingProfile({
       values: nextDraft.values,
       source_mode: nextDraft.source_mode,
       audit: auditRecord,

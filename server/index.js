@@ -33,6 +33,18 @@ const ajv = new Ajv({ allErrors: true, strict: false })
 const validateExtractionResult = ajv.compile(caregiverExtractionResultJsonSchema)
 const auditDirectory = path.join(__dirname, "data")
 const auditFilePath = path.join(auditDirectory, "caregiver-extraction-audit.jsonl")
+const careProfileMvpArrayOptions = {
+  preferredLanguages: ["English", "Mandarin", "Hokkien"],
+  conditions: ["diabetes", "hypertension"],
+  dailyCareTasks: [],
+  mobilitySupport: ["fall_risk_monitoring"],
+  medicationSupport: [
+    "medication_reminders",
+    "blood_glucose_monitoring",
+    "blood_pressure_monitoring",
+  ],
+  householdContext: [],
+}
 
 if (!apiKey) {
   console.warn("OPENAI_API_KEY is missing. Extraction requests will fail until it is set.")
@@ -592,6 +604,7 @@ async function appendExtractionAuditRecord(audit) {
 async function extractCareProfileFromDocuments(extractedDocuments) {
   const prompt = [
     "You extract care recipient profile data from medical notes, reports, and care assessments.",
+    "This MVP parser is for a simple chronic-care patient profile used to match domestic helpers, not to build a full clinical chart.",
     "Return JSON only.",
     "Do not include markdown.",
     "Use only the supplied text.",
@@ -600,10 +613,15 @@ async function extractCareProfileFromDocuments(extractedDocuments) {
     "For name use the care recipient name, not the helper or doctor.",
     "For age return digits only as a string.",
     "For gender use male, female, or empty string.",
-    "preferredLanguages can contain one or more languages or dialects mentioned in the documents.",
+    "preferredLanguages can contain one or more languages or dialects mentioned in the documents, but only from the allowed options.",
     "preferredLanguage should be the primary language among preferredLanguages when explicit; otherwise leave it empty.",
-    "For structured care arrays, keep short normalized labels from the documents or known options when obvious.",
-    "Put uncertain narrative details into riskNotes or additionalNotes instead of inventing structured values.",
+    "For structured care arrays, never invent new labels. Choose only from the allowed options supplied for each field.",
+    "Use conditions only for chronic conditions relevant to helper matching. Do not include anaemia as a structured condition for this MVP; keep it in notes.",
+    "Keep dailyCareTasks empty unless the document explicitly states repeated caregiver-run ADL support tasks.",
+    "Use mobilitySupport only when there is a clear helper-relevant mobility or fall-monitoring need from the text.",
+    "Use medicationSupport only for helper-relevant routines like reminders or basic monitoring, not for medication names or clinical treatment plans.",
+    "Keep householdContext empty unless one of the allowed home-context options is explicitly stated.",
+    "Put uncertain or clinical narrative details into riskNotes or additionalNotes instead of inventing structured values.",
     "For fieldReviews, include one entry per field with confidence 0 to 1, short evidence snippets, issues when uncertain, and suggestedValues for array fields when item-level confidence differs.",
   ].join(" ")
 
@@ -634,11 +652,11 @@ async function extractCareProfileFromDocuments(extractedDocuments) {
           age: { type: "string" },
           gender: { type: "string", enum: ["", "male", "female"] },
           preferredLanguage: { type: "string" },
-          preferredLanguages: { type: "array", items: { type: "string" } },
-          conditions: { type: "array", items: { type: "string" } },
+          preferredLanguages: buildEnumArraySchema(careProfileMvpArrayOptions.preferredLanguages),
+          conditions: buildEnumArraySchema(careProfileMvpArrayOptions.conditions),
           dailyCareTasks: { type: "array", items: { type: "string" } },
-          mobilitySupport: { type: "array", items: { type: "string" } },
-          medicationSupport: { type: "array", items: { type: "string" } },
+          mobilitySupport: buildEnumArraySchema(careProfileMvpArrayOptions.mobilitySupport),
+          medicationSupport: buildEnumArraySchema(careProfileMvpArrayOptions.medicationSupport),
           householdContext: { type: "array", items: { type: "string" } },
           riskNotes: { type: "string" },
           additionalNotes: { type: "string" },
@@ -679,6 +697,7 @@ async function extractCareProfileFromDocuments(extractedDocuments) {
     instructions: prompt,
     input: JSON.stringify({
       responseSchema,
+      allowedOptions: careProfileMvpArrayOptions,
       documents: extractedDocuments,
     }),
   })
@@ -751,30 +770,56 @@ function normalizeCareProfileExtraction(modelResult) {
   })
 
   values.gender = values.gender === "male" || values.gender === "female" ? values.gender : ""
-  values.preferredLanguages = sanitizeTextValues(values.preferredLanguages)
+  values.preferredLanguages = sanitizeTextValues("preferredLanguages", values.preferredLanguages)
   values.preferredLanguage = typeof values.preferredLanguage === "string" ? values.preferredLanguage.trim() : ""
   if (!values.preferredLanguage && values.preferredLanguages.length > 0) {
     values.preferredLanguage = values.preferredLanguages[0]
   }
-  values.conditions = sanitizeTextValues(values.conditions)
-  values.dailyCareTasks = sanitizeTextValues(values.dailyCareTasks)
-  values.mobilitySupport = sanitizeTextValues(values.mobilitySupport)
-  values.medicationSupport = sanitizeTextValues(values.medicationSupport)
-  values.householdContext = sanitizeTextValues(values.householdContext)
+  if (!careProfileMvpArrayOptions.preferredLanguages.includes(values.preferredLanguage)) {
+    values.preferredLanguage = values.preferredLanguages[0] ?? ""
+  }
+  values.conditions = sanitizeTextValues("conditions", values.conditions)
+  values.dailyCareTasks = sanitizeTextValues("dailyCareTasks", values.dailyCareTasks)
+  values.mobilitySupport = sanitizeTextValues("mobilitySupport", values.mobilitySupport)
+  values.medicationSupport = sanitizeTextValues("medicationSupport", values.medicationSupport)
+  values.householdContext = sanitizeTextValues("householdContext", values.householdContext)
   values.age = typeof values.age === "string" ? values.age.replace(/[^0-9]/g, "") : ""
   values.name = typeof values.name === "string" ? values.name.trim() : ""
   values.riskNotes = typeof values.riskNotes === "string" ? values.riskNotes.trim() : ""
   values.additionalNotes = typeof values.additionalNotes === "string" ? values.additionalNotes.trim() : ""
 
+  for (const review of fieldReviews) {
+    if (review.field in careProfileMvpArrayOptions) {
+      review.suggestedValues = review.suggestedValues.filter((entry) =>
+        careProfileMvpArrayOptions[review.field].includes(entry.value),
+      )
+    }
+  }
+
   return { values, fieldReviews }
 }
 
-function sanitizeTextValues(values) {
+function buildEnumArraySchema(options) {
+  return {
+    type: "array",
+    items: options.length > 0 ? { type: "string", enum: options } : { type: "string" },
+  }
+}
+
+function sanitizeTextValues(field, values) {
   if (!Array.isArray(values)) {
     return []
   }
 
+  const allowedValues = careProfileMvpArrayOptions[field] ?? null
+
   return values
-    .filter((value, index) => typeof value === "string" && value.trim().length > 0 && values.findIndex((entry) => entry === value) === index)
+    .filter(
+      (value, index) =>
+        typeof value === "string" &&
+        value.trim().length > 0 &&
+        values.findIndex((entry) => entry === value) === index,
+    )
     .map((value) => value.trim())
+    .filter((value) => (allowedValues ? allowedValues.includes(value) : true))
 }

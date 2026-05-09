@@ -14,7 +14,7 @@ export function UserProfilePage() {
   const [careProfiles, setCareProfiles] = useState(() => getCareProfileCardData())
   const savedCaregivers = getSavedCaregiverGalleryData()
 
-  function handleDeleteProfile(profileId: string) {
+  async function handleDeleteProfile(profileId: string) {
     if (typeof window !== "undefined") {
       const confirmed = window.confirm("Delete this care recipient profile?")
 
@@ -23,7 +23,7 @@ export function UserProfilePage() {
       }
     }
 
-    deleteCareProfile(profileId)
+    await deleteCareProfile(profileId)
     setCareProfiles((currentProfiles) =>
       currentProfiles.filter((profile) => profile.id !== profileId),
     )
@@ -78,7 +78,7 @@ export function UserProfilePage() {
                 contextLabel=""
                 className="profile-card-home-compact"
                 key={profile.id}
-                onDelete={() => handleDeleteProfile(profile.id)}
+                onDelete={() => void handleDeleteProfile(profile.id)}
                 profile={profile}
                 showGlyph={false}
               />

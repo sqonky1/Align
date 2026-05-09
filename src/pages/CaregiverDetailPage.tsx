@@ -125,18 +125,18 @@ export function CaregiverDetailPage() {
   const llmReasoningError =
     llmReasoningState?.key === matchReasoningKey && llmReasoningState.status === "error"
 
-  function handleToggleSave() {
+  async function handleToggleSave() {
     if (!caregiver || !activeProfileId) {
       return
     }
 
     if (savedFlag) {
-      removeSavedCaregiverForProfile(activeProfileId, caregiver.id)
+      await removeSavedCaregiverForProfile(activeProfileId, caregiver.id)
       setSavedRevision((value) => value + 1)
       return
     }
 
-    saveCaregiverForProfile(activeProfileId, caregiver.id)
+    await saveCaregiverForProfile(activeProfileId, caregiver.id)
     setSavedRevision((value) => value + 1)
   }
 
@@ -255,7 +255,7 @@ export function CaregiverDetailPage() {
                             <button
                               aria-label={savedFlag ? "Remove from shortlist" : "Save to shortlist"}
                               className={`detail-shortlist-star ${savedFlag ? "detail-shortlist-star-active" : ""}`}
-                              onClick={handleToggleSave}
+                              onClick={() => void handleToggleSave()}
                               title={savedFlag ? "Saved to shortlist" : "Save to shortlist"}
                               type="button"
                             >

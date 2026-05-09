@@ -5,6 +5,14 @@ export type CareProfileOption = {
   label: string
 }
 
+export type CareProfileArrayFieldName =
+  | "preferredLanguages"
+  | "conditions"
+  | "dailyCareTasks"
+  | "mobilitySupport"
+  | "medicationSupport"
+  | "householdContext"
+
 export const languageOptions: CareProfileOption[] = [
   { value: "English", label: "English" },
   { value: "Mandarin", label: "Mandarin" },
@@ -52,6 +60,15 @@ export const householdContextOptions: CareProfileOption[] = [
   { value: "night_supervision_needed", label: "Night supervision needed" },
   { value: "stairs_at_home", label: "Stairs at home" },
 ]
+
+const optionValuesByField: Record<CareProfileArrayFieldName, string[]> = {
+  preferredLanguages: languageOptions.map((option) => option.value),
+  conditions: conditionOptions.map((option) => option.value),
+  dailyCareTasks: dailyCareTaskOptions.map((option) => option.value),
+  mobilitySupport: mobilitySupportOptions.map((option) => option.value),
+  medicationSupport: medicationSupportOptions.map((option) => option.value),
+  householdContext: householdContextOptions.map((option) => option.value),
+}
 
 export function getEmptyCareProfileFormValues(): CareProfileFormValues {
   return {
@@ -111,12 +128,12 @@ export function buildCareProfileFromForm(
     age: Number(values.age) || 0,
     gender: values.gender || "female",
     preferredLanguage: primaryPreferredLanguage,
-    preferredLanguages: normalizedPreferredLanguages,
-    conditions: normalizeTextArray(values.conditions),
-    dailyCareTasks: normalizeTextArray(values.dailyCareTasks),
-    mobilitySupport: normalizeTextArray(values.mobilitySupport),
-    medicationSupport: normalizeTextArray(values.medicationSupport),
-    householdContext: normalizeTextArray(values.householdContext),
+    preferredLanguages: filterAllowedCareProfileValues("preferredLanguages", normalizedPreferredLanguages),
+    conditions: filterAllowedCareProfileValues("conditions", values.conditions),
+    dailyCareTasks: filterAllowedCareProfileValues("dailyCareTasks", values.dailyCareTasks),
+    mobilitySupport: filterAllowedCareProfileValues("mobilitySupport", values.mobilitySupport),
+    medicationSupport: filterAllowedCareProfileValues("medicationSupport", values.medicationSupport),
+    householdContext: filterAllowedCareProfileValues("householdContext", values.householdContext),
     riskNotes: values.riskNotes.trim(),
     additionalNotes: values.additionalNotes.trim(),
     createdAt: existingProfile?.createdAt ?? timestamp,
@@ -124,8 +141,19 @@ export function buildCareProfileFromForm(
   }
 }
 
-function normalizeTextArray(values: string[]) {
-  return values.map((value) => value.trim()).filter(Boolean)
+export function isAllowedCareProfileValue(field: CareProfileArrayFieldName, value: string) {
+  return optionValuesByField[field].includes(value.trim())
+}
+
+export function filterAllowedCareProfileValues(field: CareProfileArrayFieldName, values: string[]) {
+  return values
+    .map((value) => value.trim())
+    .filter(
+      (value, index, allValues) =>
+        value.length > 0 &&
+        optionValuesByField[field].includes(value) &&
+        allValues.indexOf(value) === index,
+    )
 }
 
 function createProfileId() {
