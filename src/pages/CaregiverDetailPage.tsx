@@ -16,6 +16,7 @@ import {
   scoreCaregiverMatch,
   type MatchDimensionResult,
 } from "../lib/matching"
+import { getMatchReasoning } from "../lib/matchReasoning"
 import { buildCaregiverSnapshotPills } from "../lib/caregiverPills"
 import { getAgencyLogoById } from "../lib/agencyLogos"
 import type { CareProfile } from "../types"
@@ -48,20 +49,72 @@ export function CaregiverDetailPage() {
   const [isHandoffSimulationOpen, setIsHandoffSimulationOpen] = useState(false)
   const [isPracticalOverviewMinimized, setIsPracticalOverviewMinimized] = useState(false)
   const [isFitBreakdownMinimized, setIsFitBreakdownMinimized] = useState(false)
-  const [savedFlag, setSavedFlag] = useState(
+  const [isHeartMascotUnavailable, setIsHeartMascotUnavailable] = useState(false)
+  const [llmReasoningState, setLlmReasoningState] = useState<{
+    key: string
+    reasoning: string | null
+    status: "ready" | "error"
+  } | null>(null)
+  const [, setSavedRevision] = useState(0)
+  const savedFlag =
     caregiver && activeProfileId
       ? isCaregiverSavedForProfile(activeProfileId, caregiver.id)
-      : false,
-  )
+      : false
+  const matchReasoningKey =
+    isMatchedMode && caregiver && activeProfile
+      ? `${activeProfile.id}:${caregiver.id}`
+      : null
 
   useEffect(() => {
-    if (!caregiver || !activeProfileId) {
-      setSavedFlag(false)
+    if (!matchReasoningKey || !matchResult || !activeProfile || !caregiver) {
       return
     }
 
-    setSavedFlag(isCaregiverSavedForProfile(activeProfileId, caregiver.id))
-  }, [activeProfileId, caregiver])
+    const reasoningKey = matchReasoningKey
+    const reasoningProfile = activeProfile
+    const reasoningCaregiver = caregiver
+    const reasoningMatchResult = matchResult
+    let isCancelled = false
+
+    async function loadMatchReasoning() {
+      try {
+        const reasoning = await getMatchReasoning(
+          reasoningProfile,
+          reasoningCaregiver,
+          reasoningMatchResult,
+        )
+
+        if (!isCancelled) {
+          setLlmReasoningState({
+            key: reasoningKey,
+            reasoning,
+            status: "ready",
+          })
+        }
+      } catch (error) {
+        console.error("Failed to load match reasoning:", error)
+
+        if (!isCancelled) {
+          setLlmReasoningState({
+            key: reasoningKey,
+            reasoning: null,
+            status: "error",
+          })
+        }
+      }
+    }
+
+    void loadMatchReasoning()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [activeProfile, caregiver, matchReasoningKey, matchResult])
+
+  const llmReasoning =
+    llmReasoningState?.key === matchReasoningKey ? llmReasoningState.reasoning : null
+  const llmReasoningError =
+    llmReasoningState?.key === matchReasoningKey && llmReasoningState.status === "error"
 
   function handleToggleSave() {
     if (!caregiver || !activeProfileId) {
@@ -70,12 +123,12 @@ export function CaregiverDetailPage() {
 
     if (savedFlag) {
       removeSavedCaregiverForProfile(activeProfileId, caregiver.id)
-      setSavedFlag(false)
+      setSavedRevision((value) => value + 1)
       return
     }
 
     saveCaregiverForProfile(activeProfileId, caregiver.id)
-    setSavedFlag(true)
+    setSavedRevision((value) => value + 1)
   }
 
   if (!caregiver) {
@@ -149,6 +202,7 @@ export function CaregiverDetailPage() {
         ? `${matchResult.summary} ${matchResult.alert}`
         : matchResult.summary
       : ""
+  const displayedReasoningCopy = llmReasoning ?? aiReasoningCopy
 
   return (
     <section className="page-section caregiver-detail-page">
@@ -251,14 +305,27 @@ export function CaregiverDetailPage() {
           {isMatchedMode && matchResult ? (
             <div className="detail-ai-reasoning-row" aria-label="AI reasoning">
               <div className="detail-ai-avatar">
-                <img alt="Heart mascot" src={heartMascot} />
+                {isHeartMascotUnavailable ? (
+                  <span aria-hidden="true" className="detail-ai-avatar-fallback">❤</span>
+                ) : (
+                  <img
+                    alt="Heart mascot"
+                    onError={() => setIsHeartMascotUnavailable(true)}
+                    src={heartMascot}
+                  />
+                )}
               </div>
               <section className="detail-ai-reasoning">
                 <div className="detail-ai-reasoning-header">
                   <p className="panel-label">AI reasoning</p>
                   <span className="detail-ai-match-badge">{matchResult.matchPercent}% match</span>
                 </div>
-                <p className="detail-ai-reasoning-copy">{aiReasoningCopy}</p>
+                <p className="detail-ai-reasoning-copy">{displayedReasoningCopy}</p>
+                {llmReasoningError ? (
+                  <p className="detail-supporting-copy">
+                    Showing fallback explanation because the live reasoning request failed.
+                  </p>
+                ) : null}
               </section>
             </div>
           ) : null}

@@ -21,12 +21,14 @@ export function SearchPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [isPickerOpen, setIsPickerOpen] = useState(false)
-  const [isMatchLoading, setIsMatchLoading] = useState(false)
   const matchLoadingTimeoutRef = useRef<number | null>(null)
   const activeProfileId = searchParams.get("profile")
   const matchLoadingParam = searchParams.get(MATCH_LOADING_PARAM_KEY)
   const activeProfile = activeProfileId ? getCareProfileById(activeProfileId) : null
   const isMatchedMode = Boolean(activeProfile)
+  const isMatchLoading = Boolean(
+    activeProfileId && matchLoadingParam === MATCH_LOADING_PARAM_VALUE,
+  )
   const careProfiles = getCareProfileCardData()
   const searchResults = activeProfile
     ? getRankedCaregiverGalleryData(activeProfile)
@@ -43,11 +45,9 @@ export function SearchPage() {
       window.clearTimeout(matchLoadingTimeoutRef.current)
     }
 
-    setIsMatchLoading(true)
     matchLoadingTimeoutRef.current = window.setTimeout(() => {
       const params = new URLSearchParams({ profile: activeProfileId })
       navigate(`/search?${params.toString()}`, { replace: true })
-      setIsMatchLoading(false)
       matchLoadingTimeoutRef.current = null
     }, getMatchLoadingDurationMs())
   }, [activeProfileId, matchLoadingParam, navigate])

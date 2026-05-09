@@ -44,8 +44,7 @@ export function CaregiverCard({
         </div>
         {matchPercent !== null ? (
           <span className="score-token">
-            <span>{matchPercent}%</span>
-            <span>{" match"}</span>
+            <span>{matchPercent}% {" match"}</span>
           </span>
         ) : null}
       </div>

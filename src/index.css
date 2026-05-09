@@ -1842,6 +1842,13 @@ h3 {
   object-fit: contain;
 }
 
+.detail-ai-avatar-fallback {
+  color: rgba(31, 92, 82, 0.85);
+  font-family: var(--font-heading);
+  font-size: 1.85rem;
+  line-height: 1;
+}
+
 .detail-ai-reasoning {
   position: relative;
   display: grid;
