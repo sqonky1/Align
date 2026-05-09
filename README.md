@@ -1,64 +1,26 @@
 # Align
 
-Align is a hackathon MVP for senior care matching within a broader FDW support ecosystem.
+Align is an MVP for senior-care matching in an FDW support workflow. Employers create structured care profiles, run ranked caregiver matching, review fit details, shortlist candidates, and hand off to agencies for placement.
 
-**Core problem statement**: How might we enable and empower caregivers who are caring for seniors or PWDs so that they can alleviate caregiver fatigue and burnout?
+## What Is Implemented
 
-The product helps employers structure a senior's care needs, compare those needs against a caregiver pool, and reduce caregiver burnout and fatigue caused by skills-care mismatch. While employers and helpers both benefit from better matching, the deeper problem Align is addressing is the pressure placed on foreign domestic workers when care demands exceed their training, language ability, or lived experience. Search is for recommendation and discovery, and employers can be referred through the website to a partner agency for hiring and placement.
-
-## Product Scope
-
-- Employer-facing main flow for this MVP
-- Seniors only for this MVP
-- Hardcoded mock data, no backend
-- Agencies are part of the ecosystem and support downstream hiring and placement
-- Structured care needs drive matching to reduce helper burnout and fatigue from poor fit
-- Free-text notes are contextual only and do not affect score
-- Primary product interaction is employer-side, but the problem framing should stay helper-aware and FDW-centered
-
-## Current Information Architecture
-
-### 1. Employer Profile Workspace `/`
-
-- Main employer home
-- Holds care profiles
-- Holds saved caregivers
-- Main entry point for creating new care profiles
-- Each care profile can launch matched search with profile context
-
-### 2. Create/Edit Care Profile
-
-- `/profiles/new`
-- `/profiles/:profileId/edit`
-- Shared form route component for create and edit
-- Stored in `localStorage`
-
-### 3. Search `/search`
-
-- Browse mode when no profile is active
-- Matched mode when opened with `?profile=<id>`
-- Browse mode shows the full caregiver dataset without fake match percentages
-- Matched mode ranks caregivers from most to least relevant
-- Website can guide the employer toward an agency handoff for hiring and placement after shortlist/discovery
-
-### 4. Caregiver Detail Page
-
-- Top 3 matched search cards are already designed as a preview of this direction
+- Employer workspace at `/` with care profile list and saved caregivers
+- Care profile create/edit flow at `/profiles/new` and `/profiles/:profileId/edit`
+- Care profile detail page at `/profiles/:profileId`
+- Search page at `/search` with:
+- Browse mode (no profile context)
+- Matched mode (`?profile=<id>`) with ranked results and loading state
+- Caregiver detail page at `/caregivers/:caregiverId` with:
+- Match breakdown against active profile
+- Shortlist toggle per profile
+- Agency handoff simulation UI
+- AI-generated practical match reasoning (via backend API)
 
 ## Matching Model
 
-Matching is weighted, rule-based, and explainable, scored out of 100.
+Matching is weighted, rule-based, and explainable (0-100).
 
-Dimensions:
-
-- Language
-- Conditions overlap
-- Daily care tasks overlap
-- Mobility support overlap
-- Medication support overlap
-- Years of experience
-
-Current weights:
+Weights in [src/lib/matching.ts](/Users/lawrence/Documents/Align/src/lib/matching.ts):
 
 - Language: `32`
 - Conditions: `22`
@@ -67,117 +29,94 @@ Current weights:
 - Medication support: `10`
 - Experience: `6`
 
-Design intent:
+Notes:
 
-- Language mismatch matters strongly because communication gaps can increase helper strain
-- Only structured profile fields drive score
-- Match percentages should be defensible, not arbitrary
-- Better matching should lower the risk of caregiver burnout and fatigue caused by skill-care mismatch
-- Rationale should stay practical rather than clinical
-
-## Current UX Decisions
-
-- No manual `draft / ready for search` toggle
-- Care profiles are continuously editable
-- If needed, readiness is inferred, not user-managed
-- Risk notes and additional notes stay separate
-- Multi-select fields use type-to-search inputs
-- Selector placeholder text is `Select`
-- Gender labels render capitalized
-- `Search ready` has been removed from care recipient cards
-
-## Current Search UI
-
-### Browse Mode
-
-- Opens from navigation
-- Uses the full caregiver dataset
-- No fake match percentages
-- Gallery-style caregiver cards
-
-### Matched Mode
-
-- Opens from a care profile with `?profile=<id>`
-- Top 3 results render as compact detailed preview cards
-- Remaining results render as a lighter ranked gallery
-- Top 3 cards use medal accents:
-  - Gold for `#1`
-  - Silver for `#2`
-  - Bronze for `#3`
-- Fit chips are compact:
-  - Green for fully fulfilled
-  - Yellow for partially fulfilled
-  - Red for not fulfilled
+- Only structured fields contribute to score
+- Free-text notes (`riskNotes`, `additionalNotes`) are context only
+- Tie-breakers: match percent, raw score, years of experience, then name
 
 ## Tech Stack
 
-- Vite
-- React
-- TypeScript
-- CSS
-- Mock data stored in source files
-- `localStorage` for care profile persistence
-
-## Key Files
-
-- [src/data/caregivers.ts](/Users/lawrence/Documents/Align/src/data/caregivers.ts)
-- [src/data/careProfiles.ts](/Users/lawrence/Documents/Align/src/data/careProfiles.ts)
-- [src/data/agencies.ts](/Users/lawrence/Documents/Align/src/data/agencies.ts)
-- [src/data/savedCaregivers.ts](/Users/lawrence/Documents/Align/src/data/savedCaregivers.ts)
-- [src/lib/data.ts](/Users/lawrence/Documents/Align/src/lib/data.ts)
-- [src/lib/careProfiles.ts](/Users/lawrence/Documents/Align/src/lib/careProfiles.ts)
-- [src/lib/matching.ts](/Users/lawrence/Documents/Align/src/lib/matching.ts)
-- [src/pages/UserProfilePage.tsx](/Users/lawrence/Documents/Align/src/pages/UserProfilePage.tsx)
-- [src/pages/NewCareProfilePage.tsx](/Users/lawrence/Documents/Align/src/pages/NewCareProfilePage.tsx)
-- [src/pages/SearchPage.tsx](/Users/lawrence/Documents/Align/src/pages/SearchPage.tsx)
-- [src/app/routes.tsx](/Users/lawrence/Documents/Align/src/app/routes.tsx)
-- [src/types/index.ts](/Users/lawrence/Documents/Align/src/types/index.ts)
-- [src/index.css](/Users/lawrence/Documents/Align/src/index.css)
+- Frontend: Vite + React + TypeScript + React Router
+- Backend: Express (`server/index.js`)
+- AI SDK: OpenAI Node SDK
+- Data: mock source files + `localStorage` persistence for profile/saved state
 
 ## Local Development
 
-Install dependencies:
+1. Install deps:
 
 ```bash
 npm install
 ```
 
-Run the app:
+2. Add env vars in `.env`:
+
+```bash
+OPENAI_API_KEY=your_key
+OPENAI_MODEL=gpt-5.2
+PORT=8787
+```
+
+3. Run client + server:
 
 ```bash
 npm run dev
 ```
 
-Build for production:
+4. Build:
 
 ```bash
 npm run build
 ```
 
-## Current Status
+## API (Current)
 
-Completed:
+- `GET /api/health` health check
+- `POST /api/match-reasoning` returns 2-3 sentence practical reasoning for a profile-caregiver match
 
-1. `chore: scaffold app shell routing and design tokens`
-2. `feat: add typed mock data layer for agencies caregivers and care profiles`
-3. `feat: implement create and edit care profile flow`
-4. `feat: add caregiver matching engine and scoring utilities`
-5. `feat: build ranked caregiver search results view`
+If `OPENAI_API_KEY` is missing, match-reasoning requests fail by design.
 
-Next likely commits:
+## Medical Document Processing (Next Implementation)
 
-1. `feat: add caregiver detail page with fit breakdown`
-2. `feat: implement shortlist flow and website-based agency handoff simulation`
-3. `feat: add AI note upload placeholder and extraction preview`
-4. `style: polish copy states and match visualization`
+Next, we will add medical document processing to prefill a care profile from uploaded notes/reports while keeping human review in the loop.
 
-## Constraints
+Planned extraction targets (mapped to existing care profile shape in [src/types/index.ts](/Users/lawrence/Documents/Align/src/types/index.ts)):
 
-Do not add yet:
+- Recipient identity/details:
+- `name`, `age`, `gender`, `preferredLanguage` (when explicitly stated)
+- Care needs:
+- `conditions`
+- `dailyCareTasks`
+- `mobilitySupport`
+- `medicationSupport`
+- Home context:
+- `householdContext`
+- Writing details / context:
+- `riskNotes`
+- `additionalNotes`
 
-- Supabase or any backend
-- Profile deletion
-- Full AI parsing
-- Production-grade robustness
+Implementation approach:
 
-This repo is intentionally optimized for MVP speed, clear IA, explainable matching behavior, and sharper framing around FDW well-being alongside employer decision support.
+- Add upload + parse endpoint (new API route)
+- Use structured LLM extraction into a strict schema
+- Normalize extracted values to option sets in [src/lib/careProfiles.ts](/Users/lawrence/Documents/Align/src/lib/careProfiles.ts)
+- Return field-level confidence + source snippets for review
+- Let user accept/edit before saving profile
+
+Guardrails:
+
+- Do not invent missing facts
+- Keep uncertain content in notes, not structured fields
+- Keep extraction auditable with source-to-field traceability
+
+## Key Files
+
+- [src/app/routes.tsx](/Users/lawrence/Documents/Align/src/app/routes.tsx)
+- [src/pages/SearchPage.tsx](/Users/lawrence/Documents/Align/src/pages/SearchPage.tsx)
+- [src/pages/CaregiverDetailPage.tsx](/Users/lawrence/Documents/Align/src/pages/CaregiverDetailPage.tsx)
+- [src/pages/NewCareProfilePage.tsx](/Users/lawrence/Documents/Align/src/pages/NewCareProfilePage.tsx)
+- [src/lib/matching.ts](/Users/lawrence/Documents/Align/src/lib/matching.ts)
+- [src/lib/careProfiles.ts](/Users/lawrence/Documents/Align/src/lib/careProfiles.ts)
+- [src/types/index.ts](/Users/lawrence/Documents/Align/src/types/index.ts)
+- [server/index.js](/Users/lawrence/Documents/Align/server/index.js)

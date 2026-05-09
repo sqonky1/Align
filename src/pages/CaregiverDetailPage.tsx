@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import heartMascot from "../assets/heart.png"
 import { CareProfileCard } from "../components/cards/CareProfileCard"
@@ -34,16 +34,25 @@ export function CaregiverDetailPage() {
   const activeProfileId = searchParams.get("profile")
   const caregiver = caregiverId ? getCaregiverById(caregiverId) : null
   const activeProfile = activeProfileId ? getCareProfileById(activeProfileId) : null
-  const rankedMatches = activeProfile ? getRankedCaregiverMatches(activeProfile, getCaregivers()) : []
-  const rankedMatchIndex =
-    caregiver && activeProfile
-      ? rankedMatches.findIndex((entry) => entry.caregiver.id === caregiver.id)
-      : -1
-  const matchResult =
-    caregiver && activeProfile
-      ? rankedMatches[rankedMatchIndex] ??
-        scoreCaregiverMatch(activeProfile, caregiver)
-      : null
+  const rankedMatches = useMemo(
+    () => (activeProfile ? getRankedCaregiverMatches(activeProfile, getCaregivers()) : []),
+    [activeProfile],
+  )
+  const rankedMatchIndex = useMemo(
+    () =>
+      caregiver && activeProfile
+        ? rankedMatches.findIndex((entry) => entry.caregiver.id === caregiver.id)
+        : -1,
+    [activeProfile, caregiver, rankedMatches],
+  )
+  const matchResult = useMemo(
+    () =>
+      caregiver && activeProfile
+        ? rankedMatches[rankedMatchIndex] ??
+          scoreCaregiverMatch(activeProfile, caregiver)
+        : null,
+    [activeProfile, caregiver, rankedMatchIndex, rankedMatches],
+  )
   const isMatchedMode = Boolean(caregiver && activeProfile && matchResult)
   const [isHandoffConfirmOpen, setIsHandoffConfirmOpen] = useState(false)
   const [isHandoffSimulationOpen, setIsHandoffSimulationOpen] = useState(false)
@@ -109,7 +118,7 @@ export function CaregiverDetailPage() {
     return () => {
       isCancelled = true
     }
-  }, [activeProfile, caregiver, matchReasoningKey, matchResult])
+  }, [matchReasoningKey])
 
   const llmReasoning =
     llmReasoningState?.key === matchReasoningKey ? llmReasoningState.reasoning : null
@@ -203,132 +212,130 @@ export function CaregiverDetailPage() {
         : matchResult.summary
       : ""
   const displayedReasoningCopy = llmReasoning ?? aiReasoningCopy
-
   return (
     <section className="page-section caregiver-detail-page">
       <section className="detail-stage">
         <div className="detail-main">
-          <div className="detail-match-overview">
-            <div className="detail-primary-stack">
-              <section className={`detail-comparison-shell ${isMatchedMode ? "detail-comparison-shell-matched" : ""}`}>
-                <section className="caregiver-card detail-hero">
-                <div className="detail-hero-body">
-                  <div className="detail-portrait">
-                    <div className="portrait-frame">
-                      {agencyLogo ? (
-                        <img alt={`${caregiver.agencyName} logo`} src={agencyLogo} />
-                      ) : (
-                        <span>{caregiver.name.charAt(0)}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="caregiver-card-copy detail-hero-content">
-                    <div className="detail-hero-header">
-                      <div className="detail-hero-heading">
-                        <div>
-                          <div className="detail-hero-name-row">
-                            <h2>{caregiver.name}</h2>
-                          </div>
-                          <p className="agency-line">{caregiver.agencyName}</p>
-                        </div>
-                      </div>
-
-                      <div className="detail-hero-actions">
-                        <button
-                          className="button-primary detail-handoff-button detail-handoff-button-inline"
-                          onClick={() => setIsHandoffConfirmOpen(true)}
-                          type="button"
-                        >
-                          Agency handoff
-                        </button>
-                        {isMatchedMode ? (
-                          <button
-                            aria-label={savedFlag ? "Remove from shortlist" : "Save to shortlist"}
-                            className={`detail-shortlist-star ${savedFlag ? "detail-shortlist-star-active" : ""}`}
-                            onClick={handleToggleSave}
-                            title={savedFlag ? "Saved to shortlist" : "Save to shortlist"}
-                            type="button"
-                          >
-                            <span aria-hidden="true">{savedFlag ? "★" : "☆"}</span>
-                          </button>
+          <div className="detail-overview-surface">
+            <div className="detail-match-overview">
+              <div className="detail-primary-stack">
+                <section className={`detail-comparison-shell ${isMatchedMode ? "detail-comparison-shell-matched" : ""}`}>
+                  <section className="caregiver-card detail-hero">
+                  <div className="detail-hero-body">
+                    <div className="detail-portrait">
+                      <div className="portrait-frame">
+                        {agencyLogo ? (
+                          <img alt={`${caregiver.agencyName} logo`} src={agencyLogo} />
                         ) : (
-                          <span className="detail-status-chip">
-                            {caregiver.availability === "available" ? "Available now" : "Shortlist only"}
-                          </span>
+                          <span>{caregiver.name.charAt(0)}</span>
                         )}
                       </div>
                     </div>
 
-                    <p className="result-summary">{caregiver.bio}</p>
+                    <div className="caregiver-card-copy detail-hero-content">
+                      <div className="detail-hero-header">
+                        <div className="detail-hero-heading">
+                          <div>
+                            <div className="detail-hero-name-row">
+                              <h2>{caregiver.name}</h2>
+                            </div>
+                            <p className="agency-line">{caregiver.agencyName}</p>
+                          </div>
+                        </div>
 
-                    {isMatchedMode ? null : (
-                      <div className="breakdown-chip-list" aria-label="Caregiver snapshot">
-                        {browseSnapshotPills.map((item) => (
-                          <span className={`breakdown-chip breakdown-chip-${item.tone}`} key={item.label}>
-                            {item.label}
-                          </span>
-                        ))}
+                        <div className="detail-hero-actions">
+                          <button
+                            className="button-primary detail-handoff-button detail-handoff-button-inline"
+                            onClick={() => setIsHandoffConfirmOpen(true)}
+                            type="button"
+                          >
+                            Agency handoff
+                          </button>
+                          {isMatchedMode ? (
+                            <button
+                              aria-label={savedFlag ? "Remove from shortlist" : "Save to shortlist"}
+                              className={`detail-shortlist-star ${savedFlag ? "detail-shortlist-star-active" : ""}`}
+                              onClick={handleToggleSave}
+                              title={savedFlag ? "Saved to shortlist" : "Save to shortlist"}
+                              type="button"
+                            >
+                              <span aria-hidden="true">{savedFlag ? "★" : "☆"}</span>
+                            </button>
+                          ) : (
+                            <span className="detail-status-chip">
+                              {caregiver.availability === "available" ? "Available now" : "Shortlist only"}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-                </section>
 
-                {isMatchedMode && activeProfile ? (
-                  <CareProfileCard
-                    className="detail-profile-context-card"
-                    contextLabel="Reviewing for"
-                    href={`/profiles/${activeProfile.id}`}
-                    profile={{
-                      id: activeProfile.id,
-                      name: activeProfile.name,
-                      age: activeProfile.age,
-                      gender: activeProfile.gender,
-                      preferredLanguage: activeProfile.preferredLanguage,
+                      <p className="result-summary">{caregiver.bio}</p>
+
+                      {isMatchedMode ? null : (
+                        <div className="breakdown-chip-list" aria-label="Caregiver snapshot">
+                          {browseSnapshotPills.map((item) => (
+                            <span className={`breakdown-chip breakdown-chip-${item.tone}`} key={item.label}>
+                              {item.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  </section>
+
+                  {isMatchedMode && activeProfile ? (
+                    <CareProfileCard
+                      className="detail-profile-context-card"
+                      contextLabel="Reviewing for"
+                      href={`/profiles/${activeProfile.id}`}
+                      profile={{
+                        id: activeProfile.id,
+                        name: activeProfile.name,
+                        age: activeProfile.age,
+                        gender: activeProfile.gender,
+                        preferredLanguage: activeProfile.preferredLanguage,
                     }}
                     showActions={false}
                     variant="anchor"
+                    interactive={false}
                   />
                 ) : null}
               </section>
+              </div>
+
+              {isMatchedMode && matchResult ? (
+                <aside className="detail-radar-panel" aria-label="Skills fit chart">
+                  <p className="detail-fit-summary-score">Match: {matchResult.matchPercent}%</p>
+                  <DetailSkillsFitRadar breakdown={matchResult.breakdown} />
+                </aside>
+              ) : null}
             </div>
 
             {isMatchedMode && matchResult ? (
-              <aside className="detail-radar-panel" aria-label="Skills fit chart">
-                <p className="detail-fit-summary-score">Match: {matchResult.matchPercent}%</p>
-                <DetailSkillsFitRadar breakdown={matchResult.breakdown} />
-              </aside>
-            ) : null}
-          </div>
-
-          {isMatchedMode && matchResult ? (
-            <div className="detail-ai-reasoning-row" aria-label="AI reasoning">
-              <div className="detail-ai-avatar">
-                {isHeartMascotUnavailable ? (
-                  <span aria-hidden="true" className="detail-ai-avatar-fallback">❤</span>
-                ) : (
-                  <img
-                    alt="Heart mascot"
-                    onError={() => setIsHeartMascotUnavailable(true)}
-                    src={heartMascot}
-                  />
-                )}
-              </div>
-              <section className="detail-ai-reasoning">
-                <div className="detail-ai-reasoning-header">
-                  <p className="panel-label">AI reasoning</p>
-                  <span className="detail-ai-match-badge">{matchResult.matchPercent}% match</span>
+              <div className="detail-ai-reasoning-row" aria-label="Reasoning">
+                <div className="detail-ai-avatar">
+                  {isHeartMascotUnavailable ? (
+                    <span aria-hidden="true" className="detail-ai-avatar-fallback">❤</span>
+                  ) : (
+                    <img
+                      alt="Heart mascot"
+                      onError={() => setIsHeartMascotUnavailable(true)}
+                      src={heartMascot}
+                    />
+                  )}
                 </div>
-                <p className="detail-ai-reasoning-copy">{displayedReasoningCopy}</p>
-                {llmReasoningError ? (
-                  <p className="detail-supporting-copy">
-                    Showing fallback explanation because the live reasoning request failed.
-                  </p>
-                ) : null}
-              </section>
-            </div>
-          ) : null}
+                <section className="detail-ai-reasoning">
+                  <p className="panel-label">AI reasoning</p>
+                  <p className="detail-ai-reasoning-copy">{displayedReasoningCopy}</p>
+                  {llmReasoningError ? (
+                    <p className="detail-supporting-copy">
+                      Showing fallback explanation because the live reasoning request failed.
+                    </p>
+                  ) : null}
+                </section>
+              </div>
+            ) : null}
 
           <section className="section-shell">
             <div className="section-header section-header-tight">
@@ -488,6 +495,7 @@ export function CaregiverDetailPage() {
               ) : null}
             </section>
           ) : null}
+          </div>
         </div>
       </section>
 
