@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import heartMascot from "../assets/heart.png"
+import triangleMascot from "../assets/triangle.png"
 import { CareProfileCard } from "../components/cards/CareProfileCard"
 import {
   formatDisplayLabel,
@@ -221,6 +222,32 @@ export function CaregiverDetailPage() {
         : matchResult.summary
       : ""
   const displayedReasoningCopy = llmReasoning ?? aiReasoningCopy
+  const aiRecommendationCopy =
+    isMatchedMode && caregiver && matchResult
+      ? matchResult.matchPercent >= 80
+        ? `AI recommendation: Strongly shortlist ${caregiver.name} for this care profile.`
+        : matchResult.matchPercent >= 60
+          ? `AI recommendation: Consider shortlisting ${caregiver.name}, with review of the fit gaps noted above.`
+          : `AI recommendation: Do not prioritize ${caregiver.name} for this care profile unless your options are limited.`
+      : ""
+  const aiReasoningAvatar = (
+    <div className="detail-ai-avatar">
+      {isHeartMascotUnavailable ? (
+        <span aria-hidden="true" className="detail-ai-avatar-fallback">❤</span>
+      ) : (
+        <img
+          alt="Heart mascot"
+          onError={() => setIsHeartMascotUnavailable(true)}
+          src={heartMascot}
+        />
+      )}
+    </div>
+  )
+  const aiRecommendationAvatar = (
+    <div className="detail-ai-avatar">
+      <img alt="Triangle mascot" src={triangleMascot} />
+    </div>
+  )
   return (
     <section className="page-section caregiver-detail-page">
       <section className="detail-stage">
@@ -323,18 +350,9 @@ export function CaregiverDetailPage() {
             </div>
 
             {isMatchedMode && matchResult ? (
-              <div className="detail-ai-reasoning-row" aria-label="Reasoning">
-                <div className="detail-ai-avatar">
-                  {isHeartMascotUnavailable ? (
-                    <span aria-hidden="true" className="detail-ai-avatar-fallback">❤</span>
-                  ) : (
-                    <img
-                      alt="Heart mascot"
-                      onError={() => setIsHeartMascotUnavailable(true)}
-                      src={heartMascot}
-                    />
-                  )}
-                </div>
+              <div className="detail-ai-reasoning-stack" aria-label="Reasoning">
+                <div className="detail-ai-reasoning-row">
+                {aiReasoningAvatar}
                 <section className="detail-ai-reasoning">
                   <p className="panel-label">AI reasoning</p>
                   {isLlmReasoningLoading ? (
@@ -358,6 +376,28 @@ export function CaregiverDetailPage() {
                     </p>
                   ) : null}
                 </section>
+                </div>
+                <div className="detail-ai-reasoning-row">
+                {aiRecommendationAvatar}
+                <section className="detail-ai-reasoning detail-ai-recommendation">
+                  <p className="panel-label">Recommended Training</p>
+                  {isLlmReasoningLoading ? (
+                    <div
+                      aria-busy="true"
+                      aria-live="polite"
+                      className="detail-ai-reasoning-loading"
+                    >
+                      <p className="detail-ai-reasoning-status">Preparing recommendation...</p>
+                      <div aria-hidden="true" className="detail-ai-reasoning-skeleton">
+                        <span className="skeleton-line skeleton-line-detail-reasoning" />
+                        <span className="skeleton-line skeleton-line-detail-reasoning skeleton-line-detail-reasoning-short" />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="detail-ai-reasoning-copy">{aiRecommendationCopy}</p>
+                  )}
+                </section>
+                </div>
               </div>
             ) : null}
 

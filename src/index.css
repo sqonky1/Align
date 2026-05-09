@@ -1922,6 +1922,11 @@ h3 {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.detail-ai-reasoning-stack {
+  display: grid;
+  gap: 12px;
+}
+
 .detail-ai-avatar {
   display: grid;
   place-items: center;
@@ -1979,6 +1984,20 @@ h3 {
 .detail-ai-reasoning .panel-label,
 .detail-ai-reasoning-copy {
   margin: 0;
+}
+
+.detail-ai-recommendation {
+  border: 1px solid rgba(233, 191, 126, 0.34);
+  background: linear-gradient(180deg, rgba(255, 251, 244, 0.98), rgba(255, 245, 231, 0.97));
+  box-shadow:
+    0 14px 28px rgba(160, 108, 44, 0.08),
+    0 2px 6px rgba(160, 108, 44, 0.05);
+}
+
+.detail-ai-recommendation::before {
+  background: rgba(255, 248, 236, 0.98);
+  border-bottom: 1px solid rgba(233, 191, 126, 0.34);
+  border-left: 1px solid rgba(233, 191, 126, 0.34);
 }
 
 .detail-ai-reasoning-header {

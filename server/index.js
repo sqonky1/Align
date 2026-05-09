@@ -35,7 +35,7 @@ const auditDirectory = path.join(__dirname, "data")
 const auditFilePath = path.join(auditDirectory, "caregiver-extraction-audit.jsonl")
 const careProfileMvpArrayOptions = {
   preferredLanguages: ["English", "Mandarin", "Hokkien"],
-  conditions: ["diabetes", "hypertension"],
+  conditions: ["anaemia", "diabetes", "hypertension"],
   dailyCareTasks: [],
   mobilitySupport: ["fall_risk_monitoring"],
   medicationSupport: [
@@ -616,7 +616,7 @@ async function extractCareProfileFromDocuments(extractedDocuments) {
     "preferredLanguages can contain one or more languages or dialects mentioned in the documents, but only from the allowed options.",
     "preferredLanguage should be the primary language among preferredLanguages when explicit; otherwise leave it empty.",
     "For structured care arrays, never invent new labels. Choose only from the allowed options supplied for each field.",
-    "Use conditions only for chronic conditions relevant to helper matching. Do not include anaemia as a structured condition for this MVP; keep it in notes.",
+    "Use conditions only for chronic conditions relevant to helper matching.",
     "Keep dailyCareTasks empty unless the document explicitly states repeated caregiver-run ADL support tasks.",
     "Use mobilitySupport only when there is a clear helper-relevant mobility or fall-monitoring need from the text.",
     "Use medicationSupport only for helper-relevant routines like reminders or basic monitoring, not for medication names or clinical treatment plans.",

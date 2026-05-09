@@ -23,6 +23,7 @@ export const languageOptions: CareProfileOption[] = [
 ]
 
 export const conditionOptions: CareProfileOption[] = [
+  { value: "anaemia", label: "Anaemia" },
   { value: "dementia", label: "Dementia" },
   { value: "stroke", label: "Stroke" },
   { value: "diabetes", label: "Diabetes" },
