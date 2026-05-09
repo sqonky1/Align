@@ -2,19 +2,16 @@
 
 Align is an MVP for senior-care matching in an FDW support workflow. Employers create structured care profiles, run ranked caregiver matching, review fit details, shortlist candidates, and hand off to agencies for placement.
 
-## What Is Implemented
+## Product Features
 
-- Employer workspace at `/` with care profile list and saved caregivers
-- Care profile create/edit flow at `/profiles/new` and `/profiles/:profileId/edit`
-- Care profile detail page at `/profiles/:profileId`
-- Search page at `/search` with:
+- Employer workspace (`/`) with care profiles and shortlisted caregivers
+- Care profile create/edit flow (`/profiles/new`, `/profiles/:profileId/edit`)
+- Care profile detail page (`/profiles/:profileId`) with structured care brief and suggested caregivers
+- Search (`/search`) in:
 - Browse mode (no profile context)
 - Matched mode (`?profile=<id>`) with ranked results and loading state
-- Caregiver detail page at `/caregivers/:caregiverId` with:
-- Match breakdown against active profile
-- Shortlist toggle per profile
-- Agency handoff simulation UI
-- AI-generated practical match reasoning (via backend API)
+- Caregiver detail (`/caregivers/:caregiverId`) with match breakdown, shortlist toggle, and agency handoff simulation
+- AI-generated practical match reasoning via backend API
 
 ## Matching Model
 
@@ -37,10 +34,11 @@ Notes:
 
 ## Tech Stack
 
-- Frontend: Vite + React + TypeScript + React Router
-- Backend: Express (`server/index.js`)
-- AI SDK: OpenAI Node SDK
-- Data: mock source files + `localStorage` persistence for profile/saved state
+- Frontend: Vite, React, TypeScript, React Router
+- Backend: Express (Node.js)
+- AI integration: OpenAI Node SDK (`/api/match-reasoning`)
+- Data & persistence: typed mock data in `src/data/*` + browser `localStorage`
+- Tooling: ESLint, TypeScript compiler, npm scripts with concurrent client/server dev mode
 
 ## Local Development
 
@@ -70,6 +68,14 @@ npm run dev
 npm run build
 ```
 
+## Project Scripts
+
+- `npm run dev`: run frontend (`vite`) and backend (`server/index.js`) together
+- `npm run dev:client`: run frontend only
+- `npm run dev:server`: run backend only with watch mode
+- `npm run build`: type-check and production build
+- `npm run lint`: run ESLint
+
 ## API (Current)
 
 - `GET /api/health` health check
@@ -88,18 +94,10 @@ Next, we will add medical document processing to prefill a care profile from upl
 
 Planned extraction targets (mapped to existing care profile shape in [src/types/index.ts](/Users/lawrence/Documents/Align/src/types/index.ts)):
 
-- Recipient identity/details:
-- `name`, `age`, `gender`, `preferredLanguage` (when explicitly stated)
-- Care needs:
-- `conditions`
-- `dailyCareTasks`
-- `mobilitySupport`
-- `medicationSupport`
-- Home context:
-- `householdContext`
-- Writing details / context:
-- `riskNotes`
-- `additionalNotes`
+- Recipient identity/details: `name`, `age`, `gender`, `preferredLanguage` (when explicitly stated)
+- Care needs: `conditions`, `dailyCareTasks`, `mobilitySupport`, `medicationSupport`
+- Home context: `householdContext`
+- Writing details/context: `riskNotes`, `additionalNotes`
 
 Implementation approach:
 
