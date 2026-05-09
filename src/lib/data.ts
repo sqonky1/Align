@@ -1,5 +1,5 @@
-import { agencies } from "../data/agencies"
-import { caregivers } from "../data/caregivers"
+import { agencies as mockAgencies } from "../data/agencies"
+import { caregivers as mockCaregivers } from "../data/caregivers"
 import { careProfiles } from "../data/careProfiles"
 import { savedCaregivers } from "../data/savedCaregivers"
 import { getCaregiverLanguageDisplay, getRankedCaregiverMatches } from "./matching"
@@ -38,6 +38,33 @@ type CareProfileRow = {
   updated_at: string
 }
 
+type AgencyRow = {
+  id: string
+  name: string
+  location: string
+}
+
+type CaregiverRow = {
+  id: string
+  name: string
+  age: number
+  gender: "male" | "female"
+  agency_id: string
+  agency_name: string
+  nationality: string
+  languages: string[]
+  years_of_experience: number
+  bio: string
+  care_conditions: string[]
+  care_tasks: string[]
+  mobility_skills: string[]
+  medication_skills: string[]
+  training: string[]
+  certifications: string[]
+  portrait_url: string | null
+  availability: "available" | "shortlist_only"
+}
+
 type SavedCaregiverRow = {
   id: string
   care_profile_id: string
@@ -55,13 +82,15 @@ type AgencyHandoffRow = {
 }
 
 let careProfilesStore = careProfiles.map(normalizeCareProfile)
+let agenciesStore = [...mockAgencies]
+let caregiversStore = [...mockCaregivers]
 let savedCaregiversStore = [...savedCaregivers]
 let agencyHandoffRequestsStore: AgencyHandoffRequest[] = []
 let workspaceInitialized = false
 let workspaceInitializationPromise: Promise<void> | null = null
 
 export function getAgencies() {
-  return agencies
+  return agenciesStore
 }
 
 export function getCareProfiles() {
@@ -130,11 +159,11 @@ export async function deleteCareProfile(profileId: string) {
 }
 
 export function getCaregivers() {
-  return caregivers
+  return caregiversStore
 }
 
 export function getCaregiverById(caregiverId: string) {
-  return caregivers.find((caregiver) => caregiver.id === caregiverId) ?? null
+  return caregiversStore.find((caregiver) => caregiver.id === caregiverId) ?? null
 }
 
 export function getSavedCaregiverLinks() {
@@ -251,13 +280,13 @@ export function getSavedCaregiverGalleryData(): WorkspaceSavedCaregiverCard[] {
     profiles.map((profile) => [
       profile.id,
       new Map(
-        getRankedCaregiverMatches(profile, caregivers).map((result) => [result.caregiver.id, result]),
+        getRankedCaregiverMatches(profile, caregiversStore).map((result) => [result.caregiver.id, result]),
       ),
     ]),
   )
 
   return getSavedCaregiverLinks().flatMap((saved) => {
-    const caregiver = caregivers.find((entry) => entry.id === saved.caregiverId)
+    const caregiver = caregiversStore.find((entry) => entry.id === saved.caregiverId)
     const profile = profiles.find((entry) => entry.id === saved.careProfileId)
 
     if (!caregiver || !profile) {
@@ -292,7 +321,7 @@ export function getSavedCaregiverGalleryDataForProfile(
 }
 
 export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCaregiverCard[] {
-  return getRankedCaregiverMatches(profile, caregivers).map((result) => ({
+  return getRankedCaregiverMatches(profile, caregiversStore).map((result) => ({
     id: result.caregiver.id,
     name: result.caregiver.name,
     agencyId: result.caregiver.agencyId,
@@ -308,7 +337,7 @@ export function getRankedCaregiverGalleryData(profile: CareProfile): SearchCareg
 }
 
 export function getBrowseCaregiverGalleryData(): SearchCaregiverCard[] {
-  return caregivers.map((caregiver) => ({
+  return caregiversStore.map((caregiver) => ({
     id: caregiver.id,
     name: caregiver.name,
     agencyId: caregiver.agencyId,
@@ -467,6 +496,8 @@ async function loadWorkspaceData() {
   const fallbackSavedCaregivers = readStoredSavedCaregivers() ?? savedCaregivers
   const fallbackAgencyHandoffs = readStoredAgencyHandoffRequests() ?? []
 
+  agenciesStore = [...mockAgencies]
+  caregiversStore = [...mockCaregivers]
   careProfilesStore = fallbackProfiles.map(normalizeCareProfile)
   savedCaregiversStore = fallbackSavedCaregivers
   agencyHandoffRequestsStore = fallbackAgencyHandoffs
@@ -476,11 +507,23 @@ async function loadWorkspaceData() {
   }
 
   try {
-    const [remoteProfiles, remoteSavedCaregivers, remoteAgencyHandoffs] = await Promise.all([
+    const [
+      remoteAgencies,
+      remoteCaregivers,
+      remoteProfiles,
+      remoteSavedCaregivers,
+      remoteAgencyHandoffs,
+    ] = await Promise.all([
+      selectRows<AgencyRow>("agencies", { order: "name.asc" }),
+      selectRows<CaregiverRow>("caregivers", { order: "name.asc" }),
       selectRows<CareProfileRow>("care_profiles", { order: "updated_at.desc" }),
       selectRows<SavedCaregiverRow>("saved_caregivers", { order: "saved_at.desc" }),
       selectRows<AgencyHandoffRow>("agency_handoffs", { order: "submitted_at.desc" }),
     ])
+
+    agenciesStore = remoteAgencies.length > 0 ? remoteAgencies.map(fromAgencyRow) : [...mockAgencies]
+    caregiversStore =
+      remoteCaregivers.length > 0 ? remoteCaregivers.map(fromCaregiverRow) : [...mockCaregivers]
 
     if (remoteProfiles.length === 0 && careProfilesStore.length > 0) {
       await persistCareProfiles(careProfilesStore)
@@ -614,5 +657,36 @@ function fromAgencyHandoffRow(row: AgencyHandoffRow): AgencyHandoffRequest {
     caregiverIds: row.caregiver_ids ?? [],
     note: row.note ?? "",
     submittedAt: row.submitted_at,
+  }
+}
+
+function fromAgencyRow(row: AgencyRow) {
+  return {
+    id: row.id,
+    name: row.name,
+    location: row.location,
+  }
+}
+
+function fromCaregiverRow(row: CaregiverRow): Caregiver {
+  return {
+    id: row.id,
+    name: row.name,
+    age: row.age,
+    gender: row.gender,
+    agencyId: row.agency_id,
+    agencyName: row.agency_name,
+    nationality: row.nationality,
+    languages: row.languages ?? [],
+    yearsOfExperience: row.years_of_experience,
+    bio: row.bio ?? "",
+    careConditions: row.care_conditions ?? [],
+    careTasks: row.care_tasks ?? [],
+    mobilitySkills: row.mobility_skills ?? [],
+    medicationSkills: row.medication_skills ?? [],
+    training: row.training ?? [],
+    certifications: row.certifications ?? [],
+    portraitUrl: row.portrait_url ?? null,
+    availability: row.availability,
   }
 }

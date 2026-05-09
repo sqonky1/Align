@@ -21,6 +21,8 @@ import { buildCaregiverSnapshotPills } from "../lib/caregiverPills"
 import { getAgencyLogoById } from "../lib/agencyLogos"
 import type { CareProfile } from "../types"
 
+const REASONING_MIN_LOAD_MS = 300
+
 type DetailListGroup = {
   label: string
   values: string[]
@@ -62,7 +64,7 @@ export function CaregiverDetailPage() {
   const [llmReasoningState, setLlmReasoningState] = useState<{
     key: string
     reasoning: string | null
-    status: "ready" | "error"
+    status: "loading" | "ready" | "error"
   } | null>(null)
   const [, setSavedRevision] = useState(0)
   const savedFlag =
@@ -86,12 +88,17 @@ export function CaregiverDetailPage() {
     let isCancelled = false
 
     async function loadMatchReasoning() {
+      setLlmReasoningState({
+        key: reasoningKey,
+        reasoning: null,
+        status: "loading",
+      })
+
       try {
-        const reasoning = await getMatchReasoning(
-          reasoningProfile,
-          reasoningCaregiver,
-          reasoningMatchResult,
-        )
+        const [reasoning] = await Promise.all([
+          getMatchReasoning(reasoningProfile, reasoningCaregiver, reasoningMatchResult),
+          new Promise((resolve) => window.setTimeout(resolve, REASONING_MIN_LOAD_MS)),
+        ])
 
         if (!isCancelled) {
           setLlmReasoningState({
@@ -122,6 +129,8 @@ export function CaregiverDetailPage() {
 
   const llmReasoning =
     llmReasoningState?.key === matchReasoningKey ? llmReasoningState.reasoning : null
+  const isLlmReasoningLoading =
+    llmReasoningState?.key === matchReasoningKey && llmReasoningState.status === "loading"
   const llmReasoningError =
     llmReasoningState?.key === matchReasoningKey && llmReasoningState.status === "error"
 
@@ -328,7 +337,21 @@ export function CaregiverDetailPage() {
                 </div>
                 <section className="detail-ai-reasoning">
                   <p className="panel-label">AI reasoning</p>
-                  <p className="detail-ai-reasoning-copy">{displayedReasoningCopy}</p>
+                  {isLlmReasoningLoading ? (
+                    <div
+                      aria-busy="true"
+                      aria-live="polite"
+                      className="detail-ai-reasoning-loading"
+                    >
+                      <p className="detail-ai-reasoning-status">Generating practical explanation...</p>
+                      <div aria-hidden="true" className="detail-ai-reasoning-skeleton">
+                        <span className="skeleton-line skeleton-line-detail-reasoning" />
+                        <span className="skeleton-line skeleton-line-detail-reasoning skeleton-line-detail-reasoning-short" />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="detail-ai-reasoning-copy">{displayedReasoningCopy}</p>
+                  )}
                   {llmReasoningError ? (
                     <p className="detail-supporting-copy">
                       Showing fallback explanation because the live reasoning request failed.
