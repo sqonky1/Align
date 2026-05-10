@@ -296,8 +296,6 @@ async function generateTrainingRecommendations({
       "Do not provide any summary, preface, or gap explanation.",
       "Start immediately with recommendations only.",
       "Recommendations must be an array of 1 to 3 objects with title, url, and reason.",
-      "Within each recommendation, reason must follow this exact template: [hyperlink]: [reasoning].",
-      "In that template, [hyperlink] must be the same URL as the recommendation url field.",
       "Every url must start with https://training-healthcare.vertis.digital/.",
       `If there is a diabetes-related gap, one recommendation must use the exact url ${diabetesTrainingUrl}.`,
       "Recommend a course only when it maps to an exact missing value in breakdown.missingValues.",
@@ -305,6 +303,9 @@ async function generateTrainingRecommendations({
       "Every reason must name the exact condition or explicit skill mismatch it addresses.",
       "If no candidate course is specific enough to a documented mismatch, omit it.",
       "Keep the tone practical and employer-facing.",
+      "Write the reason in plain language only.",
+      "Do not mention JSON, arrays, schema fields, keys, breakdown, missingValues, matchedValues, or internal labels.",
+      "Do not include the URL inside the reason text.",
       "Do not invent course names, URLs, or medical claims.",
     ].join(" "),
     input: JSON.stringify({
@@ -333,7 +334,7 @@ async function generateTrainingRecommendations({
   })
 
   const parsed = parseJsonObject(response.output_text)
-  const sanitized = sanitizeTrainingRecommendations(parsed, candidates, hasDiabetesGap)
+  const sanitized = sanitizeTrainingRecommendations(parsed, candidates, hasDiabetesGap, breakdown)
 
   if (sanitized.recommendations.length > 0) {
     return sanitized
@@ -465,7 +466,7 @@ function buildFallbackCourseReason(candidate, breakdown) {
   return `This course is relevant because the current match is missing coverage for ${formatList(dedupe(matchedGapLabels))}.`
 }
 
-function sanitizeTrainingRecommendations(value, candidates, hasDiabetesGap) {
+function sanitizeTrainingRecommendations(value, candidates, hasDiabetesGap, breakdown) {
   const allowedByTitle = new Map(candidates.map((candidate) => [candidate.title, candidate]))
   const allowedUrls = new Set(candidates.map((candidate) => candidate.url))
   const recommendations = Array.isArray(value?.recommendations)
@@ -483,8 +484,8 @@ function sanitizeTrainingRecommendations(value, candidates, hasDiabetesGap) {
             url: allowedCandidate.url,
             reason:
               typeof item.reason === "string" && item.reason.trim().length > 0
-                ? item.reason.trim()
-                : buildFallbackCourseReason(allowedCandidate, []),
+                ? sanitizeTrainingRecommendationReason(item.reason, allowedCandidate, breakdown)
+                : buildFallbackCourseReason(allowedCandidate, breakdown),
           }
         })
         .filter(Boolean)
@@ -528,6 +529,39 @@ function parseJsonObject(rawValue) {
     return extracted ? JSON.parse(extracted) : null
   }
 }
+
+function sanitizeTrainingRecommendationReason(reason, candidate, breakdown) {
+  const normalizedReason = stripLeadingUrl(reason.trim(), candidate.url)
+
+  if (!normalizedReason) {
+    return buildFallbackCourseReason(candidate, breakdown)
+  }
+
+  const lowerReason = normalizedReason.toLowerCase()
+
+  if (
+    lowerReason.includes("missingvalues") ||
+    lowerReason.includes("matchedvalues") ||
+    lowerReason.includes("breakdown") ||
+    lowerReason.includes("json") ||
+    lowerReason.includes("schema") ||
+    lowerReason.includes("array") ||
+    lowerReason.includes("field")
+  ) {
+    return buildFallbackCourseReason(candidate, breakdown)
+  }
+
+  return normalizedReason
+}
+
+function stripLeadingUrl(reason, url) {
+  return reason.replace(new RegExp(`^${escapeRegExp(url)}\\s*:\\s*`, "i"), "").trim()
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
 
 function formatTrainingGapLabel(value) {
   return value
