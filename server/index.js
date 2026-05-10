@@ -27,12 +27,13 @@ const port = Number(process.env.PORT ?? 8787)
 const model = process.env.OPENAI_MODEL ?? "gpt-5.2"
 const apiKey = process.env.OPENAI_API_KEY
 const app = express()
-const cache = new Map()
 const openai = new OpenAI({ apiKey })
 const ajv = new Ajv({ allErrors: true, strict: false })
 const validateExtractionResult = ajv.compile(caregiverExtractionResultJsonSchema)
 const auditDirectory = path.join(__dirname, "data")
 const auditFilePath = path.join(auditDirectory, "caregiver-extraction-audit.jsonl")
+const trainingSiteRoot = "https://training-healthcare.vertis.digital/"
+const diabetesTrainingUrl = `${trainingSiteRoot}training/TP_059_CTG-0410`
 const careProfileMvpArrayOptions = {
   preferredLanguages: ["English", "Mandarin", "Hokkien"],
   conditions: ["anaemia", "diabetes", "hypertension"],
@@ -69,14 +70,6 @@ app.post("/api/match-reasoning", async (request, response) => {
     return
   }
 
-  const cacheKey = `${profile.id}:${caregiver.id}`
-  const cachedReasoning = cache.get(cacheKey)
-
-  if (cachedReasoning) {
-    response.json({ reasoning: cachedReasoning, cached: true })
-    return
-  }
-
   try {
     const reasoning = await generateMatchReasoning({
       caregiver,
@@ -89,10 +82,39 @@ app.post("/api/match-reasoning", async (request, response) => {
       openai,
     })
 
-    cache.set(cacheKey, reasoning)
-    response.json({ reasoning, cached: false })
+    response.json({ reasoning })
   } catch {
     response.status(500).json({ error: "Failed to generate match reasoning." })
+  }
+})
+
+app.post("/api/training-recommendations", async (request, response) => {
+  if (!apiKey) {
+    response.status(500).json({ error: "OPENAI_API_KEY is not configured on the server." })
+    return
+  }
+
+  const { caregiver, matchPercent, profile, breakdown } = request.body ?? {}
+
+  if (!profile?.id || !caregiver?.id || !Array.isArray(breakdown) || typeof matchPercent !== "number") {
+    response.status(400).json({ error: "Invalid request payload." })
+    return
+  }
+
+  try {
+    const recommendations = await generateTrainingRecommendations({
+      caregiver,
+      matchPercent,
+      profile,
+      breakdown,
+      model,
+      openai,
+    })
+
+    response.json(recommendations)
+  } catch (error) {
+    console.error("Failed to generate training recommendations:", error)
+    response.status(500).json({ error: "Failed to generate training recommendations." })
   }
 })
 
@@ -239,6 +261,273 @@ async function generateMatchReasoning({
   }
 
   return reasoning
+}
+
+async function generateTrainingRecommendations({
+  caregiver,
+  matchPercent,
+  profile,
+  breakdown,
+  model,
+  openai,
+}) {
+  const candidates = buildTrainingCandidates(breakdown)
+  const hasDiabetesGap = breakdown.some((item) =>
+    item.missingValues.some((value) => value === "diabetes" || value === "blood_glucose_monitoring"),
+  )
+  const fallback = buildFallbackTrainingRecommendations({ breakdown, candidates, hasDiabetesGap })
+
+  if (candidates.length === 0) {
+    return fallback
+  }
+
+  const response = await openai.responses.create({
+    model,
+    instructions: [
+      "You recommend caregiver training courses for a helper-match review screen.",
+      "Use only the supplied JSON and only the supplied candidate courses.",
+      "Return JSON only with key recommendations.",
+      "Do not provide any summary, preface, or gap explanation.",
+      "Start immediately with recommendations only.",
+      "Recommendations must be an array of 1 to 3 objects with title, url, and reason.",
+      "Within each recommendation, reason must follow this exact template: [hyperlink]: [reasoning].",
+      "In that template, [hyperlink] must be the same URL as the recommendation url field.",
+      "Every url must start with https://training-healthcare.vertis.digital/.",
+      `If there is a diabetes-related gap, one recommendation must use the exact url ${diabetesTrainingUrl}.`,
+      "Recommend a course only when it maps to an exact missing value in breakdown.missingValues.",
+      "Do not recommend broad or generic chronic-care courses unless the missing value itself is explicitly covered by that course.",
+      "Every reason must name the exact condition or explicit skill mismatch it addresses.",
+      "If no candidate course is specific enough to a documented mismatch, omit it.",
+      "Keep the tone practical and employer-facing.",
+      "Do not invent course names, URLs, or medical claims.",
+    ].join(" "),
+    input: JSON.stringify({
+      caregiver: {
+        id: caregiver.id,
+        name: caregiver.name,
+        careConditions: caregiver.careConditions,
+        careTasks: caregiver.careTasks,
+        mobilitySkills: caregiver.mobilitySkills,
+        medicationSkills: caregiver.medicationSkills,
+        training: caregiver.training,
+      },
+      profile: {
+        id: profile.id,
+        name: profile.name,
+        conditions: profile.conditions,
+        dailyCareTasks: profile.dailyCareTasks,
+        mobilitySupport: profile.mobilitySupport,
+        medicationSupport: profile.medicationSupport,
+      },
+      matchPercent,
+      breakdown,
+      candidates,
+      diabetesTrainingUrl,
+    }),
+  })
+
+  const parsed = parseJsonObject(response.output_text)
+  const sanitized = sanitizeTrainingRecommendations(parsed, candidates, hasDiabetesGap)
+
+  if (sanitized.recommendations.length > 0) {
+    return sanitized
+  }
+
+  return fallback
+}
+
+function buildTrainingCandidates(breakdown) {
+  const catalog = [
+    {
+      title: "Comprehensive Diabetes Care for Caregivers",
+      url: diabetesTrainingUrl,
+      gapKeys: ["conditions", "medicationSupport"],
+      gapValues: ["diabetes", "blood_glucose_monitoring"],
+    },
+    {
+      title: "Empowering Caregivers (Domestic Helpers & Families) in the Nutritional Management for people requiring Therapeutic Diet and Modified Textured Diet",
+      url: trainingSiteRoot,
+      gapKeys: ["conditions", "dailyCareTasks"],
+      gapValues: ["anaemia", "feeding", "meal_preparation"],
+    },
+    {
+      title: "Stroke Management for Caregivers",
+      url: trainingSiteRoot,
+      gapKeys: ["conditions", "mobilitySupport"],
+      gapValues: ["stroke", "transfer_support", "walking_assistance"],
+    },
+    {
+      title: "Dementia Care",
+      url: trainingSiteRoot,
+      gapKeys: ["conditions", "dailyCareTasks"],
+      gapValues: ["dementia", "companionship"],
+    },
+    {
+      title: "Basic Home Care Skills for Home Caregivers (6-hour Classroom Based)",
+      url: trainingSiteRoot,
+      gapKeys: ["dailyCareTasks"],
+      gapValues: ["bathing", "feeding", "toileting", "meal_preparation"],
+    },
+    {
+      title: "Activities of Daily Living Management (Homebased)",
+      url: trainingSiteRoot,
+      gapKeys: ["dailyCareTasks"],
+      gapValues: ["bathing", "feeding", "toileting", "exercise_support", "companionship"],
+    },
+    {
+      title: "ABCs of Caregiving Set B (for Bedbound Seniors)",
+      url: trainingSiteRoot,
+      gapKeys: ["mobilitySupport"],
+      gapValues: ["bedbound_support"],
+    },
+    {
+      title: "ABCs of Caregiving Set C (for Wheelchair Seniors)",
+      url: trainingSiteRoot,
+      gapKeys: ["mobilitySupport"],
+      gapValues: ["wheelchair_support", "transfer_support"],
+    },
+    {
+      title: "Home-based Eldercare – Basic 6 ADLs with Fall-Prevention",
+      url: trainingSiteRoot,
+      gapKeys: ["mobilitySupport", "dailyCareTasks"],
+      gapValues: ["fall_risk_monitoring", "walking_assistance", "bathing", "toileting"],
+    },
+  ]
+
+  const matches = new Map()
+
+  for (const item of breakdown) {
+    for (const missingValue of item.missingValues) {
+      for (const course of catalog) {
+        if (course.gapKeys.includes(item.key) && course.gapValues.includes(missingValue)) {
+          matches.set(course.title, course)
+        }
+      }
+    }
+  }
+
+  return Array.from(matches.values())
+}
+
+function buildFallbackTrainingRecommendations({ breakdown, candidates, hasDiabetesGap }) {
+  const ordered = [...candidates]
+
+  if (hasDiabetesGap) {
+    const diabetesCourse = ordered.find((candidate) => candidate.url === diabetesTrainingUrl)
+
+    if (diabetesCourse) {
+      ordered.splice(ordered.indexOf(diabetesCourse), 1)
+      ordered.unshift(diabetesCourse)
+    }
+  }
+
+  const recommendations = ordered.slice(0, 3).map((candidate) => ({
+    title: candidate.title,
+    url: candidate.url,
+    reason: buildFallbackCourseReason(candidate, breakdown),
+  }))
+
+  if (hasDiabetesGap && !recommendations.some((item) => item.url === diabetesTrainingUrl)) {
+    recommendations.unshift({
+      title: "Comprehensive Diabetes Care for Caregivers",
+      url: diabetesTrainingUrl,
+      reason: "This is the priority recommendation because the match is missing diabetes-related care coverage.",
+    })
+  }
+
+  return {
+    summary: "",
+    recommendations: recommendations.slice(0, 3),
+  }
+}
+
+function buildFallbackCourseReason(candidate, breakdown) {
+  const matchedGapLabels = []
+
+  for (const item of breakdown) {
+    const coveredValues = item.missingValues.filter((value) => candidate.gapValues.includes(value))
+
+    if (coveredValues.length > 0) {
+      matchedGapLabels.push(...coveredValues.map(formatTrainingGapLabel))
+    }
+  }
+
+  if (matchedGapLabels.length === 0) {
+    return "This course was selected because it directly matches a documented skill gap in this caregiver match."
+  }
+
+  return `This course is relevant because the current match is missing coverage for ${formatList(dedupe(matchedGapLabels))}.`
+}
+
+function sanitizeTrainingRecommendations(value, candidates, hasDiabetesGap) {
+  const allowedByTitle = new Map(candidates.map((candidate) => [candidate.title, candidate]))
+  const allowedUrls = new Set(candidates.map((candidate) => candidate.url))
+  const recommendations = Array.isArray(value?.recommendations)
+    ? value.recommendations
+        .filter((item) => item && typeof item.title === "string" && typeof item.url === "string")
+        .map((item) => {
+          const allowedCandidate = allowedByTitle.get(item.title.trim())
+
+          if (!allowedCandidate || !allowedUrls.has(item.url.trim())) {
+            return null
+          }
+
+          return {
+            title: allowedCandidate.title,
+            url: allowedCandidate.url,
+            reason:
+              typeof item.reason === "string" && item.reason.trim().length > 0
+                ? item.reason.trim()
+                : buildFallbackCourseReason(allowedCandidate, []),
+          }
+        })
+        .filter(Boolean)
+    : []
+
+  const dedupedRecommendations = dedupeBy(recommendations, (item) => item.url).slice(0, 3)
+
+  if (hasDiabetesGap && !dedupedRecommendations.some((item) => item.url === diabetesTrainingUrl)) {
+    const diabetesCandidate = candidates.find((candidate) => candidate.url === diabetesTrainingUrl)
+
+    if (diabetesCandidate) {
+      dedupedRecommendations.unshift({
+        title: diabetesCandidate.title,
+        url: diabetesCandidate.url,
+        reason: "This is mandatory because diabetes is one of the documented skill gaps in the match.",
+      })
+    }
+  }
+
+  return {
+    summary: "",
+    recommendations: dedupedRecommendations.slice(0, 3),
+  }
+}
+
+function parseJsonObject(rawValue) {
+  if (typeof rawValue !== "string") {
+    return null
+  }
+
+  const trimmed = rawValue.trim()
+
+  if (!trimmed) {
+    return null
+  }
+
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    const extracted = extractJsonObject(trimmed)
+    return extracted ? JSON.parse(extracted) : null
+  }
+}
+
+function formatTrainingGapLabel(value) {
+  return value
+    .split("_")
+    .join(" ")
+    .replace(/\b\w/g, (character) => character.toUpperCase())
 }
 
 async function extractDocumentResult(file) {
@@ -582,6 +871,37 @@ function dedupeIssues(issues) {
     seen.add(key)
     return true
   })
+}
+
+function dedupe(values) {
+  return values.filter((value, index) => values.indexOf(value) === index)
+}
+
+function dedupeBy(values, getKey) {
+  const seen = new Set()
+
+  return values.filter((value) => {
+    const key = getKey(value)
+
+    if (seen.has(key)) {
+      return false
+    }
+
+    seen.add(key)
+    return true
+  })
+}
+
+function formatList(values) {
+  if (values.length <= 1) {
+    return values[0] ?? ""
+  }
+
+  if (values.length === 2) {
+    return `${values[0]} and ${values[1]}`
+  }
+
+  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`
 }
 
 function extractJsonObject(value) {

@@ -2025,6 +2025,39 @@ h3 {
   line-height: 1.55;
 }
 
+.detail-ai-training-content {
+  display: grid;
+  gap: 12px;
+}
+
+.detail-ai-training-list {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-ai-training-item {
+  display: grid;
+  gap: 4px;
+}
+
+.detail-ai-training-link {
+  color: #5b79aa;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+.detail-ai-training-link:hover {
+  color: #49679a;
+}
+
+.detail-ai-training-reason {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .detail-ai-reasoning-loading {
   display: grid;
   gap: 10px;

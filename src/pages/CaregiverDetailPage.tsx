@@ -18,6 +18,10 @@ import {
   type MatchDimensionResult,
 } from "../lib/matching"
 import { getMatchReasoning } from "../lib/matchReasoning"
+import {
+  getTrainingRecommendations,
+  type TrainingRecommendationResult,
+} from "../lib/trainingRecommendations"
 import { buildCaregiverSnapshotPills } from "../lib/caregiverPills"
 import { getAgencyLogoById } from "../lib/agencyLogos"
 import type { CareProfile } from "../types"
@@ -67,6 +71,11 @@ export function CaregiverDetailPage() {
     reasoning: string | null
     status: "loading" | "ready" | "error"
   } | null>(null)
+  const [trainingRecommendationState, setTrainingRecommendationState] = useState<{
+    key: string
+    result: TrainingRecommendationResult | null
+    status: "loading" | "ready" | "error"
+  } | null>(null)
   const [, setSavedRevision] = useState(0)
   const savedFlag =
     caregiver && activeProfileId
@@ -94,10 +103,16 @@ export function CaregiverDetailPage() {
         reasoning: null,
         status: "loading",
       })
+      setTrainingRecommendationState({
+        key: reasoningKey,
+        result: null,
+        status: "loading",
+      })
 
       try {
-        const [reasoning] = await Promise.all([
+        const [reasoning, trainingRecommendations] = await Promise.all([
           getMatchReasoning(reasoningProfile, reasoningCaregiver, reasoningMatchResult),
+          getTrainingRecommendations(reasoningProfile, reasoningCaregiver, reasoningMatchResult),
           new Promise((resolve) => window.setTimeout(resolve, REASONING_MIN_LOAD_MS)),
         ])
 
@@ -107,14 +122,24 @@ export function CaregiverDetailPage() {
             reasoning,
             status: "ready",
           })
+          setTrainingRecommendationState({
+            key: reasoningKey,
+            result: trainingRecommendations,
+            status: "ready",
+          })
         }
       } catch (error) {
-        console.error("Failed to load match reasoning:", error)
+        console.error("Failed to load AI detail content:", error)
 
         if (!isCancelled) {
           setLlmReasoningState({
             key: reasoningKey,
             reasoning: null,
+            status: "error",
+          })
+          setTrainingRecommendationState({
+            key: reasoningKey,
+            result: null,
             status: "error",
           })
         }
@@ -134,6 +159,14 @@ export function CaregiverDetailPage() {
     llmReasoningState?.key === matchReasoningKey && llmReasoningState.status === "loading"
   const llmReasoningError =
     llmReasoningState?.key === matchReasoningKey && llmReasoningState.status === "error"
+  const trainingRecommendations =
+    trainingRecommendationState?.key === matchReasoningKey ? trainingRecommendationState.result : null
+  const isTrainingRecommendationLoading =
+    trainingRecommendationState?.key === matchReasoningKey &&
+    trainingRecommendationState.status === "loading"
+  const trainingRecommendationError =
+    trainingRecommendationState?.key === matchReasoningKey &&
+    trainingRecommendationState.status === "error"
 
   async function handleToggleSave() {
     if (!caregiver || !activeProfileId) {
@@ -222,14 +255,6 @@ export function CaregiverDetailPage() {
         : matchResult.summary
       : ""
   const displayedReasoningCopy = llmReasoning ?? aiReasoningCopy
-  const aiRecommendationCopy =
-    isMatchedMode && caregiver && matchResult
-      ? matchResult.matchPercent >= 80
-        ? `AI recommendation: Strongly shortlist ${caregiver.name} for this care profile.`
-        : matchResult.matchPercent >= 60
-          ? `AI recommendation: Consider shortlisting ${caregiver.name}, with review of the fit gaps noted above.`
-          : `AI recommendation: Do not prioritize ${caregiver.name} for this care profile unless your options are limited.`
-      : ""
   const aiReasoningAvatar = (
     <div className="detail-ai-avatar">
       {isHeartMascotUnavailable ? (
@@ -381,7 +406,7 @@ export function CaregiverDetailPage() {
                 {aiRecommendationAvatar}
                 <section className="detail-ai-reasoning detail-ai-recommendation">
                   <p className="panel-label">Recommended Training</p>
-                  {isLlmReasoningLoading ? (
+                  {isTrainingRecommendationLoading ? (
                     <div
                       aria-busy="true"
                       aria-live="polite"
@@ -394,8 +419,35 @@ export function CaregiverDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="detail-ai-reasoning-copy">{aiRecommendationCopy}</p>
+                    <div className="detail-ai-training-content">
+                      {trainingRecommendations && trainingRecommendations.recommendations.length > 0 ? (
+                        <div className="detail-ai-training-list">
+                          {trainingRecommendations.recommendations.map((recommendation) => (
+                            <div className="detail-ai-training-item" key={recommendation.url}>
+                              <a
+                                className="detail-ai-training-link"
+                                href={recommendation.url}
+                                rel="noreferrer"
+                                target="_blank"
+                              >
+                                {recommendation.title}
+                              </a>
+                              <p className="detail-ai-training-reason">{recommendation.reason}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="detail-ai-reasoning-copy">
+                          Training recommendations are unavailable for this match right now.
+                        </p>
+                      )}
+                    </div>
                   )}
+                  {trainingRecommendationError ? (
+                    <p className="detail-supporting-copy">
+                      Showing no live training recommendations because the recommendation request failed.
+                    </p>
+                  ) : null}
                 </section>
                 </div>
               </div>
