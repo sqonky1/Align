@@ -88,9 +88,9 @@ If `OPENAI_API_KEY` is missing, match-reasoning requests fail by design.
 - Developer documentation: this `README.md`
 - Product usage guide: [UserGuide.md](/Users/lawrence/Documents/Align/UserGuide.md)
 
-## Medical Document Processing (Next Implementation)
+## Medical Document Processing
 
-Next, we will add medical document processing to prefill a care profile from uploaded notes/reports while keeping human review in the loop.
+We added medical document processing to prefill a care profile from uploaded notes/reports while keeping human review in the loop.
 
 Planned extraction targets (mapped to existing care profile shape in [src/types/index.ts](/Users/lawrence/Documents/Align/src/types/index.ts)):
 
