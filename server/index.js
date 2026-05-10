@@ -22,12 +22,14 @@ globalThis.Path2D = Path2D
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const isDirectExecution =
+  typeof process.argv[1] === "string" && path.resolve(process.argv[1]) === __filename
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } })
 const port = Number(process.env.PORT ?? 8787)
 const model = process.env.OPENAI_MODEL ?? "gpt-5.2"
 const apiKey = process.env.OPENAI_API_KEY
 const app = express()
-const openai = new OpenAI({ apiKey })
+const openai = apiKey ? new OpenAI({ apiKey }) : null
 const ajv = new Ajv({ allErrors: true, strict: false })
 const validateExtractionResult = ajv.compile(caregiverExtractionResultJsonSchema)
 const auditDirectory = path.join(__dirname, "data")
@@ -197,9 +199,13 @@ app.post(
   },
 )
 
-app.listen(port, () => {
-  console.log(`Align API listening on http://localhost:${port}`)
-})
+if (isDirectExecution) {
+  app.listen(port, () => {
+    console.log(`Align API listening on http://localhost:${port}`)
+  })
+}
+
+export default app
 
 async function generateMatchReasoning({
   caregiver,
